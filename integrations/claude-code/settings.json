@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "toldonce hook --capture" }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "toldonce": { "command": "toldonce-mcp" }
+  }
+}
