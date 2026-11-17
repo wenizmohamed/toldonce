@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToldOnce demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f3ee; --paper:#fffdf9; --ink:#1d1b18; --muted:#6b655c; --line:#e3ddd3;
+  --accent:#b4441f; --accent-soft:#f6e3da; --ok:#2f6b4f; --ok-soft:#e1efe7; --warn:#8a5a00; --warn-soft:#f7ecd2;
+  --project:#2f5d8a; --tool:#6b4f9a; --task:#2f6b4f; --lesson:#b4441f; --corr:#9b958b;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151412; --paper:#1d1b18; --ink:#efe9df; --muted:#a39b8f; --line:#34302a;
+  --accent:#e0794f; --accent-soft:#3a2419; --ok:#7fc4a0; --ok-soft:#1d3329; --warn:#e2b04f; --warn-soft:#3a2f17;
+  --project:#7fa9d6; --tool:#b49be0; --task:#7fc4a0; --lesson:#e0794f; --corr:#6f685e;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
+header h1{font:600 clamp(34px,5vw,52px)/1.05 Fraunces,Georgia,serif;margin:0 0 10px;letter-spacing:-.01em}
+header p{margin:0;max-width:62ch;color:var(--muted);font-size:17px}
+.stats{display:flex;flex-wrap:wrap;gap:22px;margin:22px 0 30px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stats div{font-size:13px;color:var(--muted)} .stats b{display:block;font:600 22px Fraunces,serif;color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+section{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px}
+section+section{margin-top:22px}
+h2{font:600 19px Fraunces,serif;margin:0 0 4px} .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px}
+select,textarea,input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:9px 10px}
+textarea{min-height:64px;resize:vertical}
+.row{display:flex;gap:10px} .row>*{flex:1}
+button{margin-top:14px;font:600 14px Inter;background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:10px 16px;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+pre{font:12.5px/1.6 "JetBrains Mono",monospace;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:14px 0 0}
+ol.hits{list-style:none;padding:0;margin:14px 0 0}
+ol.hits li{padding:11px 0;border-top:1px solid var(--line)}
+ol.hits .t{font-weight:500} .chips{margin-top:5px;display:flex;flex-wrap:wrap;gap:5px}
+.chip{font:500 11.5px "JetBrains Mono",monospace;padding:2px 7px;border-radius:3px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.chip.rep{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.con{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.sup{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.score{float:right;font:500 12px "JetBrains Mono",monospace;color:var(--muted)}
+.note{margin-top:12px;padding:10px 12px;border-radius:4px;font-size:14px}
+.note.rep{background:var(--accent-soft);color:var(--accent)} .note.new{background:var(--ok-soft);color:var(--ok)}
+#graph{width:100%;height:560px;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+details{margin-top:14px} summary{cursor:pointer;color:var(--muted);font-size:13px}
+.status{font:12px "JetBrains Mono",monospace;color:var(--muted);margin-top:6px}
+footer{margin-top:36px;color:var(--muted);font-size:13px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Tell your coding agent once.</h1>
+  <p>ToldOnce turns every correction into a lesson in a Relate graph, linked to the projects, tools and tasks it covers. Before the agent acts, it recalls the lessons that connect to what you asked. This page runs the real Relate engine in your browser (WebAssembly) on the demo store, with the same Cypher the CLI uses.</p>
+  <div class="status" id="status">loading Relate…</div>
+</header>
+<div class="stats" id="stats"></div>
+
+<div class="grid">
+<div>
+  <section>
+    <h2>1. Ask the agent something</h2>
+    <p class="sub">Recall walks the graph: project lessons, tools the project uses, tasks named in the prompt, full-text over lesson text.</p>
+    <div class="row">
+      <div><label for="proj">Project</label><select id="proj"></select></div>
+    </div>
+    <label for="prompt">Prompt</label>
+    <textarea id="prompt">commit the new checkout page copy</textarea>
+    <button id="recallBtn">Recall lessons</button>
+    <ol class="hits" id="hits"></ol>
+    <details open><summary>What the agent sees (injected before it acts)</summary><pre id="ctx"></pre></details>
+  </section>
+
+  <section>
+    <h2>2. Correct it</h2>
+    <p class="sub">Say it like you would to the agent. If it was already told, ToldOnce counts a repeat instead of adding a duplicate.</p>
+    <label for="said">What you said</label>
+    <input id="said" value="i told you, pnpm not npm in this repo">
+    <div class="row">
+      <div><label for="kind">Applies to</label>
+        <select id="kind"><option value="project">this project</option><option value="tool">a tool</option><option value="task">a task</option><option value="">everywhere</option></select></div>
+      <div><label for="scopeName">Name</label><input id="scopeName" placeholder="git, copy…"></div>
+    </div>
+    <button id="learnBtn">Record correction</button>
+    <div id="learnOut"></div>
+  </section>
+</div>
+
+<div>
+  <section>
+    <h2>The lesson graph</h2>
+    <p class="sub">Highlighted lessons were recalled for the prompt on the left. Hover a node for detail.</p>
+    <svg id="graph" role="img" aria-label="Lesson graph"></svg>
+    <div class="legend">
+      <span><i style="background:var(--lesson)"></i>Lesson</span><span><i style="background:var(--project)"></i>Project</span>
+      <span><i style="background:var(--tool)"></i>Tool</span><span><i style="background:var(--task)"></i>Task</span>
+      <span><i style="background:var(--corr)"></i>Correction</span>
+    </div>
+  </section>
+  <section>
+    <h2>Run any Cypher</h2>
+    <textarea id="cy">MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
+RETURN l.text AS lesson, count(c) + 1 AS timesTold
+ORDER BY timesTold DESC</textarea>
+    <button class="ghost" id="cyBtn">Run</button>
+    <pre id="cyOut"></pre>
+  </section>
+</div>
+</div>
+<footer>ToldOnce · Apache-2.0 · built on <a href="https://relatedb.ai">Relate</a> (@relate/relate-wasm 1.0.2, vendored) · <a href="https://github.com/wenizmohamed/toldonce">source</a></footer>
+</div>
+
+<script type="module">
+import init, { RelateDb } from "./vendor/relate.js";
+
+const W = { project: 3, tool: 2, task: 2, global: 0.5, text: 4, repeat: 0.5 };   // same as toldonce/store.py
+const STOP = new Set("a an the to of in on for and or is are be do don't dont not never always use with it this that i you we".split(" "));
+const $ = s => document.querySelector(s);
+let db, RECALL;
+
+function run(q, params) {
+  const env = JSON.parse(db.execute(q, params ? JSON.stringify(params) : null));
+  if (env.error) throw new Error(typeof env.error === "string" ? env.error : JSON.stringify(env.error));
+  return env.rows;
+}
+const tokens = t => new Set((t.toLowerCase().match(/[a-z0-9][a-z0-9_.+]*/g) || []).filter(w => w.length > 1 && !STOP.has(w)));
+const ftQuery = t => [...tokens(t)].sort().slice(0, 24).join(" OR ");
+const jaccard = (a, b) => { const A = tokens(a), B = tokens(b); if (!A.size || !B.size) return 0;
+  let i = 0; A.forEach(x => B.has(x) && i++); return i / (A.size + B.size - i); };
+const id8 = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(16).padStart(8, "0");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function recall(project, prompt, log = true) {
+  const text = {}, ft = ftQuery(prompt);
+  if (ft) for (const r of run("MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 50) SCORE AS s RETURN l.id AS id, s", { ft }))
+    text[r.id] = r.s;
+  const top = Math.max(0, ...Object.values(text)) || 1;
+  const hits = run(RECALL, { project, tools: [], text: prompt.toLowerCase() }).map(r => {
+    let score = 0; const why = [];
+    if (r.hereProject) { score += W.project; why.push("project " + project); }
+    r.tools.forEach(t => { score += W.tool; why.push("tool " + t); });
+    r.tasks.forEach(t => { score += W.task; why.push("task " + t); });
+    if (r.nScopes === 0) { score += W.global; why.push("global"); }
+    const ts = (text[r.id] || 0) / top; if (ts) { score += W.text * ts; why.push("text " + ts.toFixed(2)); }
+    score += W.repeat * Math.min(r.repeats, 4);
+    return { ...r, score: Math.round(score * 1000) / 1000, why };
+  }).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 8);
+  if (log && hits.length) {
+    const rid = id8();
+    run("CREATE (:Recall {id: $id, at: datetime(), project: $p, prompt: $t})", { id: rid, p: project, t: prompt.slice(0, 500) });
+    hits.forEach((h, i) => run("MATCH (r:Recall {id: $r}), (l:Lesson {id: $l}) CREATE (r)-[:SURFACED {rank: $i, score: $s}]->(l)", { r: rid, l: h.id, i: i + 1, s: h.score }));
+  }
+  return hits;
+}
+
+function learn(said, scope) {
+  const cid = id8();
+  run("CREATE (:Correction {id: $id, said: $said, at: datetime(), session: 'browser'})", { id: cid, said });
+  let existing = null, best = 0.5;   // same threshold as find_repeat() in store.py
+  const ft = ftQuery(said);
+  if (ft) for (const r of run(`MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 10) SCORE AS s
+      WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+      RETURN l.id AS id, l.text AS text, [(l)-[:APPLIES_TO]->(x) | [toLower(labels(x)[0]), x.name]] AS scopes`, { ft })) {
+    if (scope && r.scopes.length && !r.scopes.some(([k, n]) => k === scope[0] && n === scope[1])) continue;
+    const sim = jaccard(said, r.text); if (sim >= best) { best = sim; existing = r; }
+  }
+  const attach = lid => { if (!scope) return; const L = { project: "Project", tool: "Tool", task: "Task" }[scope[0]];
+    run(`MATCH (l:Lesson {id: $l}) MERGE (s:${L} {name: $n}) MERGE (l)-[:APPLIES_TO]->(s)`, { l: lid, n: scope[1] }); };
+  if (existing) {
+    run("MATCH (c:Correction {id: $c}), (l:Lesson {id: $l}) MERGE (c)-[:REPEATS]->(l)", { c: cid, l: existing.id });
+    attach(existing.id); return { repeat: true, lesson: existing };
+  }
+  const lid = id8();
+  run("CREATE (:Lesson {id: $id, text: $t, created: datetime(), status: 'active'})", { id: lid, t: said });
+  run("MATCH (c:Correction {id: $c}), (l:Lesson {id: $l}) MERGE (c)-[:TAUGHT]->(l)", { c: cid, l: lid });
+  attach(lid); return { repeat: false, lesson: { id: lid, text: said } };
+}
+
+function renderStats() {
+  const s = run(`RETURN COUNT { (:Lesson) } AS lessons, COUNT { (:Correction) } AS corrections,
+    COUNT { (:Correction)-[:REPEATS]->() } AS repeats, COUNT { ()-[:SUPERSEDES]->() } AS superseded,
+    COUNT { ()-[:CONTRADICTS]->() } AS conflicts, COUNT { (:Recall) } AS recalls`)[0];
+  $("#stats").innerHTML = [["lessons", "lessons"], ["corrections", "corrections"], ["repeats", "times told twice"],
+    ["superseded", "superseded"], ["conflicts", "open conflicts"], ["recalls", "recalls logged"]]
+    .map(([k, l]) => `<div><b>${s[k]}</b>${l}</div>`).join("");
+}
+
+function renderRecall() {
+  const project = $("#proj").value, prompt = $("#prompt").value;
+  const hits = recall(project, prompt);
+  $("#hits").innerHTML = hits.map((h, i) => `<li><span class="score">${h.score}</span><span class="t">${i + 1}. ${esc(h.text)}</span>
+    <div class="chips">${h.why.map(w => `<span class="chip">${esc(w)}</span>`).join("")}
+    ${h.repeats ? `<span class="chip rep">told ${h.repeats + 1}×</span>` : ""}
+    ${h.replaced ? `<span class="chip sup">replaces ${h.replaced} older</span>` : ""}
+    ${h.conflicts.length ? `<span class="chip con">conflicts with ${h.conflicts.join(", ")}</span>` : ""}</div></li>`).join("")
+    || "<li>No lessons apply here.</li>";
+  $("#ctx").textContent = hits.length ? ["<toldonce>", "Lessons from earlier corrections that apply to this request. Follow them:",
+    ...hits.map(h => `- ${h.text}${h.repeats ? ` (told ${h.repeats + 1} times)` : ""}${h.conflicts.length ? ` [conflicts with ${h.conflicts.join(", ")}: ask before choosing]` : ""}`),
+    "</toldonce>"].join("\n") : "(nothing injected)";
+  renderStats(); drawGraph(new Set(hits.map(h => h.id)));
+}
+
+// --- small force layout, no dependencies --------------------------------------------------
+function drawGraph(hot) {
+  const nodes = run(`MATCH (n) WHERE NOT n:Recall RETURN elementId(n) AS k, labels(n)[0] AS label,
+      coalesce(n.name, n.text, n.said) AS name, n.id AS id, EXISTS { (:Lesson)-[:SUPERSEDES]->(n) } AS old`);
+  const links = run(`MATCH (a)-[r]->(b) WHERE NOT a:Recall RETURN elementId(a) AS s, elementId(b) AS t, type(r) AS type`);
+  const svg = $("#graph"), Wd = svg.clientWidth || 600, H = svg.clientHeight || 560;
+  const idx = new Map(nodes.map((n, i) => [n.k, i]));
+  const color = { Lesson: "var(--lesson)", Project: "var(--project)", Tool: "var(--tool)", Task: "var(--task)", Correction: "var(--corr)" };
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  nodes.forEach(n => { n.x = Wd / 2 + (rnd() - .5) * Wd * .8; n.y = H / 2 + (rnd() - .5) * H * .8; n.vx = n.vy = 0;
+    n.r = n.label === "Lesson" ? 8 : n.label === "Correction" ? 3.5 : 6.5; });
+  const L = links.filter(l => idx.has(l.s) && idx.has(l.t)).map(l => ({ ...l, a: nodes[idx.get(l.s)], b: nodes[idx.get(l.t)] }));
+  for (let it = 0; it < 320; it++) {
+    const alpha = 1 - it / 320;
+    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i], b = nodes[j]; let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + .01;
+      const f = 900 / d2 * alpha; a.vx += dx * f / 30; a.vy += dy * f / 30; b.vx -= dx * f / 30; b.vy -= dy * f / 30; }
+    for (const l of L) { const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, d = Math.hypot(dx, dy) || 1;
+      const want = l.type === "TAUGHT" || l.type === "REPEATS" ? 22 : 70, f = (d - want) / d * .06 * alpha;
+      l.a.vx += dx * f; l.a.vy += dy * f; l.b.vx -= dx * f; l.b.vy -= dy * f; }
+    for (const n of nodes) { n.vx += (Wd / 2 - n.x) * .004 * alpha; n.vy += (H / 2 - n.y) * .004 * alpha;
+      n.x = Math.max(14, Math.min(Wd - 14, n.x + (n.vx *= .6))); n.y = Math.max(14, Math.min(H - 14, n.y + (n.vy *= .6))); }
+  }
+  const dash = { SUPERSEDES: "6 4", CONTRADICTS: "2 3" };
+  const stroke = t => t === "CONTRADICTS" ? "var(--warn)" : t === "SUPERSEDES" ? "var(--ok)" : t === "REPEATS" ? "var(--accent)" : "var(--line)";
+  svg.setAttribute("viewBox", `0 0 ${Wd} ${H}`);
+  svg.innerHTML = L.map(l => `<line x1="${l.a.x}" y1="${l.a.y}" x2="${l.b.x}" y2="${l.b.y}" stroke="${stroke(l.type)}"
+      stroke-width="${l.type === "CONTRADICTS" || l.type === "SUPERSEDES" ? 2 : 1.2}" ${dash[l.type] ? `stroke-dasharray="${dash[l.type]}"` : ""}><title>${l.type}</title></line>`).join("")
+    + nodes.map(n => { const isHot = n.label === "Lesson" && hot.has(n.id);
+      return `<g opacity="${n.old ? .45 : 1}"><circle cx="${n.x}" cy="${n.y}" r="${isHot ? n.r + 3 : n.r}" fill="${color[n.label]}"
+        stroke="${isHot ? "var(--ink)" : "var(--paper)"}" stroke-width="${isHot ? 2.5 : 1.5}"><title>${n.label}: ${esc(n.name)}${n.old ? " (superseded)" : ""}</title></circle>
+        ${n.label !== "Correction" && n.label !== "Lesson" ? `<text x="${n.x + 9}" y="${n.y + 4}" font-size="11" font-family="JetBrains Mono" fill="var(--muted)">${esc(n.name)}</text>` : ""}</g>`; }).join("");
+}
+
+async function main() {
+  await init({ module_or_path: new URL("./vendor/relate_bg.wasm", import.meta.url) });
+  db = new RelateDb();
+  const [seed, rq] = await Promise.all([fetch("seed.cypher").then(r => r.text()), fetch("recall.cypher").then(r => r.text())]);
+  RECALL = rq;
+  for (const env of db.executeScript(seed, null).map(JSON.parse)) if (env.error) throw new Error(JSON.stringify(env.error));
+  $("#proj").innerHTML = run("MATCH (p:Project) RETURN p.name AS n ORDER BY n").map(r => `<option ${r.n === "storefront" ? "selected" : ""}>${esc(r.n)}</option>`).join("");
+  $("#status").textContent = "Relate WASM ready · demo store loaded in memory · changes stay in this tab";
+  renderRecall();
+  $("#recallBtn").onclick = renderRecall;
+  $("#learnBtn").onclick = () => {
+    const kind = $("#kind").value, name = kind === "project" ? $("#proj").value : $("#scopeName").value.trim();
+    const r = learn($("#said").value.trim(), kind && name ? [kind, name] : null);
+    $("#learnOut").innerHTML = r.repeat
+      ? `<div class="note rep">Already told: “${esc(r.lesson.text)}”. Counted as a repeat, no duplicate lesson.</div>`
+      : `<div class="note new">New lesson ${r.lesson.id} recorded.</div>`;
+    renderRecall();
+  };
+  $("#cyBtn").onclick = () => { try { $("#cyOut").textContent = JSON.stringify(run($("#cy").value), null, 2); }
+    catch (e) { $("#cyOut").textContent = String(e.message || e); } };
+}
+main().catch(e => { $("#status").textContent = "failed: " + (e.message || e); console.error(e); });
+</script>
+</body>
+</html>
