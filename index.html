@@ -3,22 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ToldOnce — Interactive Relate Graph Playground</title>
+<title>ToldOnce | Interactive Relate Graph Studio</title>
 <meta http-equiv="refresh" content="0; url=./web/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; font: 15px/1.6 system-ui, -apple-system, sans-serif; background: #f6f3ee; color: #1d1b18; display: grid; place-items: center; min-height: 100vh; padding: 24px; }
-  main { max-width: 460px; background: #fffdf9; border: 1px solid #e3ddd3; border-radius: 8px; padding: 28px; text-align: center; }
-  h1 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 26px; }
-  p { margin: 0 0 18px; color: #6b655c; }
-  a { display: inline-block; background: #1d1b18; color: #fffdf9; text-decoration: none; padding: 10px 18px; border-radius: 5px; font-weight: 600; }
+  body {
+    margin: 0;
+    font: 15px/1.6 "Instrument Sans", system-ui, sans-serif;
+    background: linear-gradient(160deg, #F6EFE6 0%, #FAF5EE 55%, #EFE4D4 100%);
+    color: #181510;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  main {
+    max-width: 460px;
+    background: #FFFFFF;
+    border: 1px solid rgba(24, 21, 16, 0.08);
+    border-radius: 24px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(42, 32, 20, 0.05), 0 16px 38px rgba(42, 32, 20, 0.07);
+  }
+  h1 {
+    margin: 0 0 8px;
+    font: 600 32px/1.1 "Fraunces", Georgia, serif;
+    letter-spacing: -0.02em;
+  }
+  h1 em {
+    font-style: italic;
+    color: #DF6428;
+  }
+  p {
+    margin: 0 0 20px;
+    color: #6E655A;
+  }
+  a {
+    display: inline-block;
+    background: #181510;
+    color: #FAF5EE;
+    text-decoration: none;
+    padding: 11px 22px;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 14px;
+  }
 </style>
 <script>window.location.replace("./web/" + window.location.search + window.location.hash);</script>
 </head>
 <body>
   <main>
-    <h1>ToldOnce</h1>
-    <p>Redirecting to the live Relate WebAssembly graph playground…</p>
-    <a href="./web/">Open Interactive Playground</a>
+    <h1>Told<em>Once</em></h1>
+    <p>Opening the live Relate WebAssembly memory graph studio...</p>
+    <a href="./web/">Open Interactive Studio</a>
   </main>
 </body>
 </html>
