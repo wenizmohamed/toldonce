@@ -168,4 +168,36 @@ def test_root_redirect_and_web_playground_assets_exist():
     assert "recall.cypher" in web and "seed.cypher" in web
     assert "Interactive Relate Graph Visualizer" in web
     assert "Trace Drawer" in web
+    assert "Explode Into Relate Graph" in web
+    assert "8-Query Live WASM Benchmark" in web
+
+
+def test_eight_query_multi_repo_benchmark_zero_leak_on_demo_store(tmp_path):
+    """Mirror the live 8-query WASM benchmark in Python: 100% precision, 0 cross-project/stale leaks."""
+    import shutil
+    demo_db = Path(__file__).parent.parent / "demo" / "lessons.rl"
+    copy_db = tmp_path / "demo_copy.rl"
+    shutil.copy2(demo_db, copy_db)
+    g = LessonGraph(str(copy_db))
+    try:
+        cases = [
+            ("storefront", "install dependencies and build app", "9dd0b4e9", {"34230a0d", "5fde76c1", "7cc562d0", "ed5bd42c"}, False),
+            ("trading-bot", "update live strategy params", "34230a0d", {"9dd0b4e9", "1864a4ba", "7cc562d0", "ed5bd42c"}, False),
+            ("trading-bot", "pin python dependencies in requirements", "5fde76c1", {"9dd0b4e9", "1864a4ba", "5cd538a9", "771d9de3"}, False),
+            ("storefront", "deploy latest release to production on vercel", "5cd538a9", {"771d9de3", "34230a0d", "5fde76c1"}, False),
+            ("agency-site", "redesign the hero section cards", "ed5bd42c", {"9dd0b4e9", "34230a0d", "5fde76c1"}, True),
+            ("storefront", "commit new checkout page copy", "32559e0b", {"34230a0d", "5fde76c1", "7cc562d0"}, False),
+            ("trading-bot", "commit docker container fix to main", "2067e6c2", {"9dd0b4e9", "760fc36e", "1864a4ba"}, False),
+            ("agency-site", "write client landing page copy", "760fc36e", {"9dd0b4e9", "34230a0d", "5fde76c1", "32559e0b"}, False),
+        ]
+        for project, prompt, must_include, must_exclude, expect_conflict in cases:
+            hits = g.recall(project, [], prompt, log=False)
+            hit_ids = {h.id for h in hits}
+            assert must_include in hit_ids, f"{project}/{prompt} missing {must_include}"
+            assert not (hit_ids & must_exclude), f"{project}/{prompt} leaked {hit_ids & must_exclude}"
+            if expect_conflict:
+                assert any(h.conflicts for h in hits), f"{project}/{prompt} did not flag open conflict"
+    finally:
+        g.close()
+
 
