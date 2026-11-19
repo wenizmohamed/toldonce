@@ -4,7 +4,16 @@
 
 Built for the Relate by Neo4j Hackathon ("Context, connected").
 
-**Live demo (runs Relate in your browser via WebAssembly):** https://wenizmohamed.github.io/toldonce/web/
+**Live interactive Relate WASM playground (runs directly in your browser):** https://wenizmohamed.github.io/toldonce/
+
+## Judge Quick-Start (60 Seconds in the Browser)
+
+Open **https://wenizmohamed.github.io/toldonce/** — zero installs, zero backend, running real `@relate/relate-wasm` in-memory over `demo/lessons.rl`:
+
+1. **Click any of the 5 Judge Scenario Presets** (*Tool Inheritance*, *Project Isolation / Zero Leak*, *Superseding History*, *Conflicting Rules Guard*, *Repeat Correction Stats*) to execute live Cypher and watch the **Interactive Relate Graph Visualizer** highlight exact traversal paths (`:USES`, `:APPLIES_TO`, `:SUPERSEDES`, `:CONTRADICTS`, `:REPEATS`).
+2. **Hover or click any recalled lesson or graph node** to isolate its justification path and open the **Node Inspector** (properties, edges, supersede chain, and correction history).
+3. **Inspect the Live `recall.cypher` Trace Drawer** to see real in-browser execution latency (ms), bound parameters, per-hit graph justification paths, and the exact shared `recall.cypher` statement.
+4. **Teach it a brand-new correction live** in the **Learn Sandbox** (or test Repeat Detection / Superseding a rule) and watch the new `:Lesson` node attach to the Relate graph and fire on recall immediately.
 
 ## The problem
 
@@ -54,7 +63,7 @@ Requires Python 3.10+. Relate comes in as a pip dependency (`relate-db`), so the
 git clone https://github.com/wenizmohamed/toldonce && cd toldonce
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"
-pytest -q                      # 12 tests
+pytest -q                      # 16 tests
 ```
 
 ### Try it on the demo store

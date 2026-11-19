@@ -125,3 +125,47 @@ def test_export_replays_into_a_fresh_store(tmp_path):
         db.execute(st)
     rows = db.execute("MATCH (:Correction)-[:REPEATS]->(l:Lesson) RETURN l.id AS id").fetchall()
     assert rows == [{"id": a}]
+
+
+def test_transitive_supersede_chain_keeps_only_head(g):
+    v1 = g.learn("deploy with ftp upload", scopes=[("tool", "vercel")])["lesson"]
+    v2 = g.learn("deploy with vercel --prod cli", scopes=[("tool", "vercel")], supersedes=v1)["lesson"]
+    v3 = g.learn("deploy via github actions ci only", scopes=[("tool", "vercel")], supersedes=v2)["lesson"]
+    hits = g.recall("site", ["vercel"], "deploy release")
+    hit_ids = ids(hits)
+    assert v3 in hit_ids and v2 not in hit_ids and v1 not in hit_ids
+    assert next(h for h in hits if h.id == v3).replaced == 2
+    chain, _ = g.history(v3)
+    assert [c["id"] for c in chain] == [v3, v2, v1]
+
+
+def test_multi_repo_tool_inheritance_and_zero_project_leak(g):
+    g.note_project("storefront", ["git", "pnpm"])
+    g.note_project("trading-bot", ["git", "python"])
+    git_rule = g.learn("never force-push to main", scopes=[("tool", "git")])["lesson"]
+    pnpm_rule = g.learn("use pnpm not npm", scopes=[("project", "storefront")])["lesson"]
+    py_rule = g.learn("pin exact python package versions", scopes=[("tool", "python")])["lesson"]
+
+    sf_ids = ids(g.recall("storefront", [], "install packages and push"))
+    tb_ids = ids(g.recall("trading-bot", [], "install packages and push"))
+
+    assert git_rule in sf_ids and pnpm_rule in sf_ids and py_rule not in sf_ids
+    assert git_rule in tb_ids and py_rule in tb_ids and pnpm_rule not in tb_ids
+
+
+def test_repeat_does_not_merge_across_disjoint_projects(g):
+    a = g.learn("use strict types everywhere", scopes=[("project", "alpha")])
+    b = g.learn("use strict types everywhere", scopes=[("project", "beta")])
+    assert not b["repeat"] and b["lesson"] != a["lesson"]
+    assert len(g.lessons()) == 2
+
+
+def test_root_redirect_and_web_playground_assets_exist():
+    root = Path(__file__).parent.parent
+    idx = (root / "index.html").read_text(encoding="utf-8")
+    web = (root / "web" / "index.html").read_text(encoding="utf-8")
+    assert "./web/" in idx
+    assert "recall.cypher" in web and "seed.cypher" in web
+    assert "Interactive Relate Graph Visualizer" in web
+    assert "Trace Drawer" in web
+

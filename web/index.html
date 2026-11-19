@@ -3,267 +3,1325 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ToldOnce demo</title>
+<title>ToldOnce — Relate Graph Playground</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f3ee; --paper:#fffdf9; --ink:#1d1b18; --muted:#6b655c; --line:#e3ddd3;
-  --accent:#b4441f; --accent-soft:#f6e3da; --ok:#2f6b4f; --ok-soft:#e1efe7; --warn:#8a5a00; --warn-soft:#f7ecd2;
-  --project:#2f5d8a; --tool:#6b4f9a; --task:#2f6b4f; --lesson:#b4441f; --corr:#9b958b;
+  --bg:#f6f3ee; --paper:#fffdf9; --paper-2:#fbf8f3; --ink:#1d1b18; --muted:#6b655c; --line:#e3ddd3; --line-strong:#cfc6b8;
+  --accent:#b4441f; --accent-soft:#f6e3da; --ok:#236144; --ok-soft:#e0efe7; --warn:#925d00; --warn-soft:#f8ecd0;
+  --project:#25588a; --project-soft:#e1ecf7; --tool:#65479c; --tool-soft:#ece6f8; --task:#236144; --task-soft:#e0efe7;
+  --lesson:#b4441f; --lesson-soft:#f6e3da; --corr:#8c857b; --edge-dim:#d8d0c4;
+  --shadow:0 1px 2px rgba(29,27,24,.05), 0 6px 20px rgba(29,27,24,.04);
 }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#151412; --paper:#1d1b18; --ink:#efe9df; --muted:#a39b8f; --line:#34302a;
-  --accent:#e0794f; --accent-soft:#3a2419; --ok:#7fc4a0; --ok-soft:#1d3329; --warn:#e2b04f; --warn-soft:#3a2f17;
-  --project:#7fa9d6; --tool:#b49be0; --task:#7fc4a0; --lesson:#e0794f; --corr:#6f685e;
-}}
+[data-theme="dark"]{
+  --bg:#141311; --paper:#1d1b18; --paper-2:#24211d; --ink:#f1ebe2; --muted:#a69e92; --line:#35302a; --line-strong:#4a433a;
+  --accent:#e57d53; --accent-soft:#3c2319; --ok:#75c89e; --ok-soft:#1b3428; --warn:#e8b651; --warn-soft:#3b3016;
+  --project:#7fb0e0; --project-soft:#1c2d3e; --tool:#b99ee8; --tool-soft:#2b223d; --task:#75c89e; --task-soft:#1b3428;
+  --lesson:#e57d53; --lesson-soft:#3c2319; --corr:#7c7469; --edge-dim:#3e3830;
+  --shadow:0 1px 2px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141311; --paper:#1d1b18; --paper-2:#24211d; --ink:#f1ebe2; --muted:#a69e92; --line:#35302a; --line-strong:#4a433a;
+    --accent:#e57d53; --accent-soft:#3c2319; --ok:#75c89e; --ok-soft:#1b3428; --warn:#e8b651; --warn-soft:#3b3016;
+    --project:#7fb0e0; --project-soft:#1c2d3e; --tool:#b99ee8; --tool-soft:#2b223d; --task:#75c89e; --task-soft:#1b3428;
+    --lesson:#e57d53; --lesson-soft:#3c2319; --corr:#7c7469; --edge-dim:#3e3830;
+    --shadow:0 1px 2px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.28);
+  }
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:40px 16px 64px}
-header h1{font:600 clamp(34px,5vw,52px)/1.05 Fraunces,Georgia,serif;margin:0 0 10px;letter-spacing:-.01em}
-header p{margin:0;max-width:62ch;color:var(--muted);font-size:17px}
-.stats{display:flex;flex-wrap:wrap;gap:22px;margin:22px 0 30px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.stats div{font-size:13px;color:var(--muted)} .stats b{display:block;font:600 22px Fraunces,serif;color:var(--ink)}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px}
-@media (max-width:900px){.grid{grid-template-columns:1fr}}
-section{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px}
-section+section{margin-top:22px}
-h2{font:600 19px Fraunces,serif;margin:0 0 4px} .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
-label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px}
-select,textarea,input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:9px 10px}
-textarea{min-height:64px;resize:vertical}
-.row{display:flex;gap:10px} .row>*{flex:1}
-button{margin-top:14px;font:600 14px Inter;background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:10px 16px;cursor:pointer}
-button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-pre{font:12.5px/1.6 "JetBrains Mono",monospace;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:14px 0 0}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:28px 18px 64px}
+
+/* Header */
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 11.5px "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+header h1{font:600 clamp(32px,4.5vw,48px)/1.04 Fraunces,Georgia,serif;margin:0 0 8px;letter-spacing:-.015em}
+header p.lead{margin:0;max-width:68ch;color:var(--muted);font-size:15.5px}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.status{font:500 12px "JetBrains Mono",monospace;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status .badge-live{color:var(--ok);background:var(--ok-soft);padding:2px 8px;border-radius:4px;font-weight:600}
+
+/* Stats strip */
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:18px 0 20px}
+@media (max-width:860px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat-card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:11px 14px;box-shadow:var(--shadow)}
+.stat-card b{display:block;font:600 22px/1.15 Fraunces,serif;color:var(--ink)}
+.stat-card span{font-size:12px;color:var(--muted)}
+.stat-card.warn b{color:var(--warn)}
+.stat-card.rep b{color:var(--accent)}
+
+/* Judge Scenario Presets Bar */
+.presets-panel{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:22px;box-shadow:var(--shadow)}
+.presets-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.presets-head strong{font:600 12px "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.presets-row{display:flex;flex-wrap:wrap;gap:8px}
+.preset-btn{margin:0;font:500 13px Inter,sans-serif;background:var(--bg);color:var(--ink);border:1px solid var(--line-strong);border-radius:6px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s ease}
+.preset-btn:hover{border-color:var(--accent);background:var(--paper-2)}
+.preset-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.preset-btn .tag{font:600 10.5px "JetBrains Mono",monospace;padding:1px 5px;border-radius:3px;background:var(--accent-soft);color:var(--accent)}
+.preset-btn.active .tag{background:rgba(255,255,255,.18);color:var(--paper)}
+.scenario-callout{margin-top:10px;padding:9px 12px;border-radius:5px;background:var(--paper-2);border-left:3px solid var(--accent);font-size:13.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.scenario-callout code{font:500 12px "JetBrains Mono",monospace;background:var(--bg);padding:1px 5px;border-radius:3px;border:1px solid var(--line)}
+
+/* Main layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+section{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow)}
+section+section{margin-top:18px}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+h2{font:600 19px Fraunces,serif;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 12px}
+
+label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px}
+select,textarea,input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;transition:border-color .15s}
+select:focus,textarea:focus,input:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:60px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+
+button{margin-top:12px;font:600 13.5px Inter,sans-serif;background:var(--ink);color:var(--paper);border:0;border-radius:5px;padding:9px 15px;cursor:pointer;transition:opacity .15s,transform .08s}
+button:hover{opacity:.9}
+button:active{transform:translateY(1px)}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
+button.ghost:hover{background:var(--bg);opacity:1}
+button.small{margin:0;padding:5px 10px;font-size:12px;font-weight:600}
+button.accent{background:var(--accent);color:#fffdf9}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.btn-row button{margin-top:0}
+
+pre{font:12px/1.55 "JetBrains Mono",monospace;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:11px 12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 0;max-height:320px;overflow-y:auto}
+
+/* Recalled Hits */
 ol.hits{list-style:none;padding:0;margin:14px 0 0}
-ol.hits li{padding:11px 0;border-top:1px solid var(--line)}
-ol.hits .t{font-weight:500} .chips{margin-top:5px;display:flex;flex-wrap:wrap;gap:5px}
-.chip{font:500 11.5px "JetBrains Mono",monospace;padding:2px 7px;border-radius:3px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+ol.hits li{padding:10px 10px;margin:0 -10px;border-top:1px solid var(--line);border-radius:5px;cursor:pointer;transition:background .12s}
+ol.hits li:hover,ol.hits li.focused{background:var(--paper-2)}
+ol.hits li.focused{outline:1.5px solid var(--accent)}
+.hit-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.hit-rank{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--lesson);color:#fff;font:600 11px "JetBrains Mono",monospace;margin-right:6px;flex-shrink:0}
+ol.hits .t{font-weight:600;font-size:14px}
+.score{font:600 12px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+.chips{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;padding-left:26px}
+.chip{font:500 11px "JetBrains Mono",monospace;padding:2px 7px;border-radius:4px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.chip.proj{background:var(--project-soft);color:var(--project);border-color:transparent}
+.chip.tool{background:var(--tool-soft);color:var(--tool);border-color:transparent}
+.chip.task{background:var(--task-soft);color:var(--task);border-color:transparent}
 .chip.rep{background:var(--accent-soft);color:var(--accent);border-color:transparent}
-.chip.con{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.con{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:600}
 .chip.sup{background:var(--ok-soft);color:var(--ok);border-color:transparent}
-.score{float:right;font:500 12px "JetBrains Mono",monospace;color:var(--muted)}
-.note{margin-top:12px;padding:10px 12px;border-radius:4px;font-size:14px}
-.note.rep{background:var(--accent-soft);color:var(--accent)} .note.new{background:var(--ok-soft);color:var(--ok)}
-#graph{width:100%;height:560px;display:block}
-.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-details{margin-top:14px} summary{cursor:pointer;color:var(--muted);font-size:13px}
-.status{font:12px "JetBrains Mono",monospace;color:var(--muted);margin-top:6px}
-footer{margin-top:36px;color:var(--muted);font-size:13px}
-a{color:var(--accent)}
+.chip.new-badge{background:var(--ok);color:#fff;border-color:transparent;font-weight:600}
+.hit-path{margin:5px 0 0 26px;font:11.5px "JetBrains Mono",monospace;color:var(--muted);line-height:1.45}
+
+/* Learn Sandbox */
+.quick-fills{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+.pill-mini{margin:0;padding:4px 9px;font:500 11.5px Inter,sans-serif;border-radius:999px;background:var(--bg);border:1px solid var(--line-strong);color:var(--ink);cursor:pointer}
+.pill-mini:hover{border-color:var(--accent);color:var(--accent)}
+.note{margin-top:12px;padding:10px 12px;border-radius:6px;font-size:13.5px;border:1px solid transparent}
+.note.rep{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.note.new{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.note code{font:500 11.5px "JetBrains Mono",monospace;background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px}
+
+/* Graph Visualizer */
+.graph-controls{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px}
+.seg button{margin:0;padding:4px 9px;font:500 11.5px Inter,sans-serif;background:transparent;color:var(--muted);border-radius:4px}
+.seg button.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.graph-stage{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden}
+#graph{width:100%;height:520px;display:block;user-select:none;touch-action:none;cursor:grab}
+#graph.dragging{cursor:grabbing}
+.graph-overlay{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.overlay-pill{font:500 11px "JetBrains Mono",monospace;background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:3px 8px;border-radius:4px;opacity:.94}
+.overlay-pill strong{color:var(--accent)}
+.zoom-tools{position:absolute;bottom:10px;right:10px;display:flex;gap:4px}
+.zoom-tools button{margin:0;padding:4px 8px;font:600 12px "JetBrains Mono",monospace;background:var(--paper);color:var(--ink);border:1px solid var(--line-strong);border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:10px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.legend .swatch-line{width:18px;height:0;border-top:2px solid var(--line-strong);border-radius:0}
+.legend .swatch-sup{border-top:2px dashed var(--ok)}
+.legend .swatch-con{border-top:2px dotted var(--warn)}
+.legend .swatch-rep{border-top:2px solid var(--accent)}
+
+/* Node Inspector */
+.inspector{margin-top:12px;background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:13px}
+.inspector-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.node-tag{font:600 11px "JetBrains Mono",monospace;padding:2px 7px;border-radius:4px;color:#fff}
+.inspector-rels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rel-chip{font:500 11.5px "JetBrains Mono",monospace;padding:3px 7px;border-radius:4px;background:var(--bg);border:1px solid var(--line);cursor:pointer;color:var(--ink)}
+.rel-chip:hover{border-color:var(--accent)}
+.history-box{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font:12px "JetBrains Mono",monospace;color:var(--muted)}
+
+/* Live recall.cypher Trace Drawer */
+.trace-metrics{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
+.metric-pill{font:600 11.5px "JetBrains Mono",monospace;padding:4px 9px;border-radius:4px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.metric-pill.fast{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.trace-paths{margin:10px 0 0;padding:0;list-style:none}
+.trace-paths li{font:12px/1.5 "JetBrains Mono",monospace;padding:6px 9px;background:var(--bg);border:1px solid var(--line);border-radius:4px;margin-bottom:6px;cursor:pointer}
+.trace-paths li:hover{border-color:var(--accent)}
+.trace-paths .tp-head{display:flex;justify-content:space-between;gap:8px;font-weight:600;color:var(--ink)}
+.trace-paths .tp-edges{color:var(--muted);margin-top:2px}
+
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--ink);font-size:13px;font-weight:600;user-select:none}
+summary span{color:var(--muted);font-weight:400}
+
+/* Cypher quick queries */
+.cy-presets{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+
+/* SVG animations */
+@keyframes pulseRing {
+  0% { stroke-opacity: .95; stroke-width: 3; }
+  50% { stroke-opacity: .35; stroke-width: 6; }
+  100% { stroke-opacity: .95; stroke-width: 3; }
+}
+.pulse-ring{animation:pulseRing 1.8s ease-in-out infinite}
+@keyframes dashFlow {
+  to { stroke-dashoffset: -24; }
+}
+.edge-flow{animation:dashFlow 1.4s linear infinite}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header>
-  <h1>Tell your coding agent once.</h1>
-  <p>ToldOnce turns every correction into a lesson in a Relate graph, linked to the projects, tools and tasks it covers. Before the agent acts, it recalls the lessons that connect to what you asked. This page runs the real Relate engine in your browser (WebAssembly) on the demo store, with the same Cypher the CLI uses.</p>
-  <div class="status" id="status">loading Relate…</div>
-</header>
-<div class="stats" id="stats"></div>
-
-<div class="grid">
-<div>
-  <section>
-    <h2>1. Ask the agent something</h2>
-    <p class="sub">Recall walks the graph: project lessons, tools the project uses, tasks named in the prompt, full-text over lesson text.</p>
-    <div class="row">
-      <div><label for="proj">Project</label><select id="proj"></select></div>
+  <header>
+    <div class="topbar">
+      <div>
+        <div class="eyebrow"><span class="dot"></span>Relate by Neo4j · Live Browser WASM Engine</div>
+        <h1>Tell your coding agent once.</h1>
+        <p class="lead">Every correction becomes a <code>:Lesson</code> node in a Relate graph connected to <code>:Project</code>, <code>:Tool</code>, and <code>:Task</code> scopes. Before an agent acts, one Cypher query traverses connected context, suppresses superseded rules, flags conflicts, and tracks repeats. Everything here runs live in-browser via <code>@relate/relate-wasm</code>.</p>
+      </div>
+      <div class="header-actions">
+        <button class="ghost small" id="resetBtn" title="Reload original demo/lessons.rl export">Reset Demo DB</button>
+        <button class="ghost small" id="themeBtn" title="Toggle light / dark theme">Dark Mode</button>
+      </div>
     </div>
-    <label for="prompt">Prompt</label>
-    <textarea id="prompt">commit the new checkout page copy</textarea>
-    <button id="recallBtn">Recall lessons</button>
-    <ol class="hits" id="hits"></ol>
-    <details open><summary>What the agent sees (injected before it acts)</summary><pre id="ctx"></pre></details>
-  </section>
+    <div class="status" id="status">Loading Relate WebAssembly engine…</div>
+  </header>
 
-  <section>
-    <h2>2. Correct it</h2>
-    <p class="sub">Say it like you would to the agent. If it was already told, ToldOnce counts a repeat instead of adding a duplicate.</p>
-    <label for="said">What you said</label>
-    <input id="said" value="i told you, pnpm not npm in this repo">
-    <div class="row">
-      <div><label for="kind">Applies to</label>
-        <select id="kind"><option value="project">this project</option><option value="tool">a tool</option><option value="task">a task</option><option value="">everywhere</option></select></div>
-      <div><label for="scopeName">Name</label><input id="scopeName" placeholder="git, copy…"></div>
-    </div>
-    <button id="learnBtn">Record correction</button>
-    <div id="learnOut"></div>
-  </section>
-</div>
+  <div class="stats" id="stats"></div>
 
-<div>
-  <section>
-    <h2>The lesson graph</h2>
-    <p class="sub">Highlighted lessons were recalled for the prompt on the left. Hover a node for detail.</p>
-    <svg id="graph" role="img" aria-label="Lesson graph"></svg>
-    <div class="legend">
-      <span><i style="background:var(--lesson)"></i>Lesson</span><span><i style="background:var(--project)"></i>Project</span>
-      <span><i style="background:var(--tool)"></i>Tool</span><span><i style="background:var(--task)"></i>Task</span>
-      <span><i style="background:var(--corr)"></i>Correction</span>
+  <!-- 1-Click Judge Scenarios -->
+  <div class="presets-panel">
+    <div class="presets-head">
+      <strong>1-Click Judge Scenarios · Prove Relate Connected Context Live</strong>
+      <span style="font-size:12px;color:var(--muted)">Click any scenario to run real Cypher + highlight graph traversal paths</span>
     </div>
-  </section>
-  <section>
-    <h2>Run any Cypher</h2>
-    <textarea id="cy">MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
-RETURN l.text AS lesson, count(c) + 1 AS timesTold
+    <div class="presets-row" id="presetsRow"></div>
+    <div class="scenario-callout" id="scenarioCallout"></div>
+  </div>
+
+  <div class="grid">
+    <!-- Left Column: Recall + Trace Drawer + Learn Sandbox -->
+    <div>
+      <section>
+        <div class="sec-head">
+          <h2>1. Recall Connected Lessons</h2>
+          <span class="metric-pill fast" id="latencyBadge">— ms</span>
+        </div>
+        <p class="sub">Walks <code>(:Project)-[:USES]->(:Tool)&lt;-[:APPLIES_TO]-(:Lesson)</code>, task matches, supersede chains, conflicts, and Relate Full-Text search. Hover any hit to isolate its path on the graph.</p>
+        <div class="row">
+          <div>
+            <label for="proj">Active Project</label>
+            <select id="proj"></select>
+          </div>
+          <div>
+            <label>Detected Repo Tools (via :USES)</label>
+            <div id="projTools" style="display:flex;flex-wrap:wrap;gap:5px;min-height:38px;align-items:center;padding:5px 8px;background:var(--bg);border:1px solid var(--line);border-radius:5px"></div>
+          </div>
+        </div>
+        <label for="prompt">Prompt sent to coding agent</label>
+        <textarea id="prompt">commit the new checkout page copy</textarea>
+        <div class="btn-row">
+          <button id="recallBtn" class="accent">Recall lessons</button>
+          <button id="clearFocusBtn" class="ghost small" style="display:none">Show all active paths</button>
+        </div>
+        <ol class="hits" id="hits"></ol>
+
+        <details open>
+          <summary>Injected Agent Prompt Block <span>(<code>&lt;toldonce&gt;</code> sent to Claude/Cursor/MCP)</span></summary>
+          <pre id="ctx"></pre>
+        </details>
+
+        <details id="traceDrawer" open>
+          <summary>Live <code>recall.cypher</code> Trace Drawer <span>(exact Cypher, bound params, graph justification &amp; latency)</span></summary>
+          <div class="trace-metrics" id="traceMetrics"></div>
+          <ul class="trace-paths" id="tracePaths"></ul>
+          <label>Bound Parameters</label>
+          <pre id="traceParams"></pre>
+          <div class="sec-head" style="margin-top:10px">
+            <label style="margin:0">Shared <code>recall.cypher</code> (identical to Python CLI &amp; MCP)</label>
+            <button class="ghost small" id="loadCypherBtn">Open in Cypher Console</button>
+          </div>
+          <pre id="traceCypher"></pre>
+        </details>
+      </section>
+
+      <section>
+        <div class="sec-head">
+          <h2>2. Learn New Correction (Live Sandbox)</h2>
+        </div>
+        <p class="sub">Type your own correction below. ToldOnce writes a live <code>:Lesson</code> node into the Relate WASM graph — or detects an existing lesson and links a <code>[:REPEATS]</code> edge instead of duplicating it.</p>
+        <div class="quick-fills">
+          <button type="button" class="pill-mini" id="qfNew">+ Try Brand-New Rule</button>
+          <button type="button" class="pill-mini" id="qfRepeat">↺ Try Repeat Detection</button>
+          <button type="button" class="pill-mini" id="qfSupersede">↑ Try Superseding Rule</button>
+        </div>
+        <label for="said">What you told the agent</label>
+        <input id="said" value="never log raw API keys or secrets in error responses">
+        <div class="row">
+          <div>
+            <label for="kind">Applies to</label>
+            <select id="kind">
+              <option value="project">this project</option>
+              <option value="tool">a tool (inherited by all repos using it)</option>
+              <option value="task">a task (fires when prompt mentions task)</option>
+              <option value="">everywhere (global)</option>
+            </select>
+          </div>
+          <div id="scopeNameWrap">
+            <label for="scopeName">Scope name</label>
+            <input id="scopeName" list="scopeSuggestions" placeholder="git, python, copy…">
+            <datalist id="scopeSuggestions"></datalist>
+          </div>
+        </div>
+        <label for="supersedesSel">Optional: Supersedes an older active lesson</label>
+        <select id="supersedesSel"><option value="">— None (independent lesson) —</option></select>
+        <div class="btn-row">
+          <button id="learnBtn" class="accent">Record correction in Relate</button>
+        </div>
+        <div id="learnOut"></div>
+      </section>
+    </div>
+
+    <!-- Right Column: Interactive SVG Relate Graph Visualizer + Cypher Console -->
+    <div>
+      <section>
+        <div class="sec-head">
+          <h2>Interactive Relate Graph Visualizer</h2>
+          <div class="seg" id="graphFilter">
+            <button type="button" data-mode="all" class="active">Full Graph</button>
+            <button type="button" data-mode="core">Core Nodes</button>
+            <button type="button" data-mode="active">Active Traversal Only</button>
+          </div>
+        </div>
+        <p class="sub">Live SVG projection of the in-memory Relate graph. Drag nodes to rearrange, click any node to inspect relationships &amp; supersede history. Highlighted paths show <em>why</em> recalled lessons fired.</p>
+
+        <div class="graph-stage">
+          <div class="graph-overlay" id="graphOverlay"></div>
+          <svg id="graph" role="img" aria-label="Interactive Relate Lesson Graph"></svg>
+          <div class="zoom-tools">
+            <button type="button" id="zoomInBtn" title="Zoom in">+</button>
+            <button type="button" id="zoomOutBtn" title="Zoom out">−</button>
+            <button type="button" id="zoomFitBtn" title="Reset view">Fit</button>
+            <button type="button" id="relayoutBtn" title="Re-run force layout">Layout</button>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><i style="background:var(--project)"></i>:Project</span>
+          <span><i style="background:var(--tool)"></i>:Tool</span>
+          <span><i style="background:var(--task)"></i>:Task</span>
+          <span><i style="background:var(--lesson)"></i>:Lesson</span>
+          <span><i style="background:var(--corr)"></i>:Correction</span>
+          <span><i class="swatch-line swatch-sup"></i>:SUPERSEDES</span>
+          <span><i class="swatch-line swatch-con"></i>:CONTRADICTS</span>
+          <span><i class="swatch-line swatch-rep"></i>:REPEATS</span>
+        </div>
+
+        <div class="inspector" id="inspector">
+          <div class="inspector-head">
+            <strong>Node Inspector</strong>
+            <span style="font-size:12px;color:var(--muted)">Click any node in the graph above to inspect properties, edges &amp; history</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head">
+          <h2>Live Relate Cypher Console</h2>
+          <span class="metric-pill" id="cyLatency">— ms</span>
+        </div>
+        <p class="sub">Query the live in-browser Relate WASM graph directly with modern Cypher.</p>
+        <div class="cy-presets">
+          <button type="button" class="pill-mini" data-cy="repeats">Repeat Leaderboard</button>
+          <button type="button" class="pill-mini" data-cy="inheritance">2-Hop Tool Inheritance</button>
+          <button type="button" class="pill-mini" data-cy="supersedes">Supersede Chains</button>
+          <button type="button" class="pill-mini" data-cy="conflicts">Open Conflicts</button>
+          <button type="button" class="pill-mini" data-cy="provenance">Recall Provenance</button>
+        </div>
+        <textarea id="cy" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;min-height:84px">MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
+RETURN l.id AS id, l.text AS lesson, count(c) + 1 AS timesTold
 ORDER BY timesTold DESC</textarea>
-    <button class="ghost" id="cyBtn">Run</button>
-    <pre id="cyOut"></pre>
-  </section>
-</div>
-</div>
-<footer>ToldOnce · Apache-2.0 · built on <a href="https://relatedb.ai">Relate</a> (@relate/relate-wasm 1.0.2, vendored) · <a href="https://github.com/wenizmohamed/toldonce">source</a></footer>
+        <div class="btn-row">
+          <button class="ghost" id="cyBtn">Run Cypher</button>
+        </div>
+        <pre id="cyOut"></pre>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <div>ToldOnce · Apache-2.0 · Built on <a href="https://relatedb.ai" target="_blank" rel="noopener">Relate by Neo4j</a> (<code>@relate/relate-wasm</code> 1.0.2, vendored)</div>
+    <div><a href="https://github.com/wenizmohamed/toldonce" target="_blank" rel="noopener">GitHub Source</a> · <code>pip install -e .</code> · <code>toldonce-mcp</code></div>
+  </footer>
 </div>
 
 <script type="module">
 import init, { RelateDb } from "./vendor/relate.js";
 
-const W = { project: 3, tool: 2, task: 2, global: 0.5, text: 4, repeat: 0.5 };   // same as toldonce/store.py
+const W = { project: 3, tool: 2, task: 2, global: 0.5, text: 4, repeat: 0.5 };
 const STOP = new Set("a an the to of in on for and or is are be do don't dont not never always use with it this that i you we".split(" "));
 const $ = s => document.querySelector(s);
-let db, RECALL;
+
+const PRESETS = [
+  {
+    id: "inheritance",
+    label: "Tool Inheritance",
+    tag: "2-HOP :USES",
+    project: "storefront",
+    prompt: "commit the new checkout page copy",
+    callout: "Proves 2-hop inheritance: (storefront:Project)-[:USES]->(git:Tool)<-[:APPLIES_TO]-(:Lesson) fires git rules automatically alongside storefront's pnpm rule and task:copy / task:commit lessons.",
+    cypherKey: "inheritance"
+  },
+  {
+    id: "isolation",
+    label: "Project Isolation",
+    tag: "ZERO LEAK",
+    project: "trading-bot",
+    prompt: "install deps and update strategy params",
+    callout: "Proves strict project boundary: storefront's 'Use pnpm, never npm' is EXCLUDED (0 leaks), while trading-bot's strategy guard + inherited python/git tool rules fire cleanly.",
+    cypherKey: "inheritance"
+  },
+  {
+    id: "supersedes",
+    label: "Superseding History",
+    tag: ":SUPERSEDES",
+    project: "storefront",
+    prompt: "deploy the latest build to production on vercel",
+    callout: "Proves non-destructive rule evolution: old 'Deploy with vercel --prod' is dimmed & excluded by NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }, while the GitHub Actions CI rule fires with 'replaces 1 older'.",
+    cypherKey: "supersedes"
+  },
+  {
+    id: "conflicts",
+    label: "Conflicting Rules Guard",
+    tag: ":CONTRADICTS",
+    project: "agency-site",
+    prompt: "redesign the hero section cards",
+    callout: "Proves conflict transparency: both hero design rules surface linked by an amber :CONTRADICTS edge, instructing the agent to ask the developer instead of silently guessing.",
+    cypherKey: "conflicts"
+  },
+  {
+    id: "repeats",
+    label: "Repeat Correction Stats",
+    tag: ":REPEATS",
+    project: "storefront",
+    prompt: "run tests before commit and fix client copy",
+    callout: "Proves repeat accountability: duplicate corrections become (:Correction)-[:REPEATS]->(:Lesson) edges instead of duplicate rules, boosting priority and powering the repeat leaderboard below.",
+    cypherKey: "repeats"
+  }
+];
+
+const CYPHER_PRESETS = {
+  repeats: `MATCH (c:Correction)-[:REPEATS]->(l:Lesson)\nRETURN l.id AS id, l.text AS lesson, count(c) + 1 AS timesTold\nORDER BY timesTold DESC`,
+  inheritance: `MATCH (p:Project)-[:USES]->(t:Tool)<-[:APPLIES_TO]-(l:Lesson)\nWHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }\nRETURN p.name AS project, t.name AS tool, l.id AS lessonId, l.text AS lesson\nORDER BY project, tool`,
+  supersedes: `MATCH path = (newer:Lesson)-[:SUPERSEDES*1..]->(older:Lesson)\nRETURN newer.id AS activeId, newer.text AS activeRule,\n       older.id AS replacedId, older.text AS replacedRule, length(path) AS hops`,
+  conflicts: `MATCH (a:Lesson)-[:CONTRADICTS]->(b:Lesson)\nRETURN a.id AS lessonA, a.text AS ruleA, b.id AS lessonB, b.text AS ruleB`,
+  provenance: `MATCH (r:Recall)-[s:SURFACED]->(l:Lesson)\nRETURN r.project AS project, r.prompt AS prompt, s.rank AS rank, s.score AS score, l.text AS lesson\nORDER BY r.at DESC, s.rank ASC LIMIT 12`
+};
+
+let db, SEED_SQL = "", RECALL = "";
+let graphNodes = [], graphLinks = [], nodeByK = new Map();
+let lastHits = [], lastTrace = null, activePresetId = "inheritance";
+let focusedLessonId = null, selectedNodeK = null, newlyLearnedId = null;
+let graphMode = "all";
+let viewBox = { x: 0, y: 0, w: 820, h: 560 };
+let draggingNode = null, panning = null;
 
 function run(q, params) {
   const env = JSON.parse(db.execute(q, params ? JSON.stringify(params) : null));
   if (env.error) throw new Error(typeof env.error === "string" ? env.error : JSON.stringify(env.error));
   return env.rows;
 }
+
 const tokens = t => new Set((t.toLowerCase().match(/[a-z0-9][a-z0-9_.+]*/g) || []).filter(w => w.length > 1 && !STOP.has(w)));
 const ftQuery = t => [...tokens(t)].sort().slice(0, 24).join(" OR ");
-const jaccard = (a, b) => { const A = tokens(a), B = tokens(b); if (!A.size || !B.size) return 0;
-  let i = 0; A.forEach(x => B.has(x) && i++); return i / (A.size + B.size - i); };
+const jaccard = (a, b) => {
+  const A = tokens(a), B = tokens(b);
+  if (!A.size || !B.size) return 0;
+  let i = 0; A.forEach(x => B.has(x) && i++);
+  return i / (A.size + B.size - i);
+};
 const id8 = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(16).padStart(8, "0");
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const trunc = (s, n = 28) => s && s.length > n ? s.slice(0, n - 1) + "…" : (s || "");
 
 function recall(project, prompt, log = true) {
-  const text = {}, ft = ftQuery(prompt);
-  if (ft) for (const r of run("MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 50) SCORE AS s RETURN l.id AS id, s", { ft }))
-    text[r.id] = r.s;
-  const top = Math.max(0, ...Object.values(text)) || 1;
-  const hits = run(RECALL, { project, tools: [], text: prompt.toLowerCase() }).map(r => {
-    let score = 0; const why = [];
-    if (r.hereProject) { score += W.project; why.push("project " + project); }
-    r.tools.forEach(t => { score += W.tool; why.push("tool " + t); });
-    r.tasks.forEach(t => { score += W.task; why.push("task " + t); });
-    if (r.nScopes === 0) { score += W.global; why.push("global"); }
-    const ts = (text[r.id] || 0) / top; if (ts) { score += W.text * ts; why.push("text " + ts.toFixed(2)); }
+  const textScores = {}, ft = ftQuery(prompt);
+  const t0 = performance.now();
+  if (ft) {
+    for (const r of run("MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 50) SCORE AS s RETURN l.id AS id, s", { ft }))
+      textScores[r.id] = r.s;
+  }
+  const tFt = performance.now() - t0;
+  const top = Math.max(0, ...Object.values(textScores)) || 1;
+  const params = { project, tools: [], text: prompt.toLowerCase() };
+  const t1 = performance.now();
+  const rawRows = run(RECALL, params);
+  const tGraph = performance.now() - t1;
+
+  const hits = rawRows.map(r => {
+    let score = 0;
+    const why = [];
+    const paths = [];
+    if (r.hereProject) {
+      score += W.project;
+      why.push({ kind: "proj", text: "project " + project });
+      paths.push(`(${r.id}:Lesson)-[:APPLIES_TO]->(${project}:Project)  +${W.project}`);
+    }
+    r.tools.forEach(t => {
+      score += W.tool;
+      why.push({ kind: "tool", text: "tool " + t });
+      paths.push(`(${project}:Project)-[:USES]->(${t}:Tool)<-[:APPLIES_TO]-(${r.id}:Lesson)  +${W.tool}`);
+    });
+    r.tasks.forEach(t => {
+      score += W.task;
+      why.push({ kind: "task", text: "task " + t });
+      paths.push(`(${r.id}:Lesson)-[:APPLIES_TO]->(${t}:Task)  +${W.task}`);
+    });
+    if (r.nScopes === 0) {
+      score += W.global;
+      why.push({ kind: "global", text: "global" });
+      paths.push(`(${r.id}:Lesson) [global scope]  +${W.global}`);
+    }
+    const ts = (textScores[r.id] || 0) / top;
+    if (ts) {
+      score += W.text * ts;
+      why.push({ kind: "text", text: "text " + ts.toFixed(2) });
+      paths.push(`FULLTEXT(lesson_text) score ${ts.toFixed(2)}  +${(W.text * ts).toFixed(2)}`);
+    }
     score += W.repeat * Math.min(r.repeats, 4);
-    return { ...r, score: Math.round(score * 1000) / 1000, why };
+    if (r.repeats) {
+      paths.push(`(:Correction)-[:REPEATS ×${r.repeats}]->(${r.id}:Lesson)  +${(W.repeat * Math.min(r.repeats, 4)).toFixed(1)}`);
+    }
+    if (r.replaced) {
+      paths.push(`(${r.id}:Lesson)-[:SUPERSEDES*1..]->(${r.replaced} older suppressed)`);
+    }
+    if (r.conflicts.length) {
+      paths.push(`(${r.id}:Lesson)-[:CONTRADICTS]-(${r.conflicts.join(", ")})  [ASK USER]`);
+    }
+    return { ...r, score: Math.round(score * 1000) / 1000, why, paths };
   }).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 8);
+
   if (log && hits.length) {
     const rid = id8();
     run("CREATE (:Recall {id: $id, at: datetime(), project: $p, prompt: $t})", { id: rid, p: project, t: prompt.slice(0, 500) });
     hits.forEach((h, i) => run("MATCH (r:Recall {id: $r}), (l:Lesson {id: $l}) CREATE (r)-[:SURFACED {rank: $i, score: $s}]->(l)", { r: rid, l: h.id, i: i + 1, s: h.score }));
   }
-  return hits;
+  return {
+    hits,
+    trace: { project, prompt, ft, params, ftMs: tFt, graphMs: tGraph, totalMs: tFt + tGraph, candidateCount: rawRows.length }
+  };
 }
 
-function learn(said, scope) {
+function learn(said, scope, supersedesId) {
   const cid = id8();
   run("CREATE (:Correction {id: $id, said: $said, at: datetime(), session: 'browser'})", { id: cid, said });
-  let existing = null, best = 0.5;   // same threshold as find_repeat() in store.py
+  let existing = null, best = 0.5;
   const ft = ftQuery(said);
-  if (ft) for (const r of run(`MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 10) SCORE AS s
-      WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
-      RETURN l.id AS id, l.text AS text, [(l)-[:APPLIES_TO]->(x) | [toLower(labels(x)[0]), x.name]] AS scopes`, { ft })) {
-    if (scope && r.scopes.length && !r.scopes.some(([k, n]) => k === scope[0] && n === scope[1])) continue;
-    const sim = jaccard(said, r.text); if (sim >= best) { best = sim; existing = r; }
+  if (ft && !supersedesId) {
+    for (const r of run(`MATCH (l:Lesson) SEARCH l IN (FULLTEXT INDEX lesson_text FOR $ft LIMIT 10) SCORE AS s
+        WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+        RETURN l.id AS id, l.text AS text, [(l)-[:APPLIES_TO]->(x) | [toLower(labels(x)[0]), x.name]] AS scopes`, { ft })) {
+      if (scope && r.scopes.length && !r.scopes.some(([k, n]) => k === scope[0] && n === scope[1])) continue;
+      const sim = jaccard(said, r.text);
+      if (sim >= best) { best = sim; existing = r; }
+    }
   }
-  const attach = lid => { if (!scope) return; const L = { project: "Project", tool: "Tool", task: "Task" }[scope[0]];
-    run(`MATCH (l:Lesson {id: $l}) MERGE (s:${L} {name: $n}) MERGE (l)-[:APPLIES_TO]->(s)`, { l: lid, n: scope[1] }); };
+  const attach = lid => {
+    if (!scope) return;
+    const L = { project: "Project", tool: "Tool", task: "Task" }[scope[0]];
+    run(`MATCH (l:Lesson {id: $l}) MERGE (s:${L} {name: $n}) MERGE (l)-[:APPLIES_TO]->(s)`, { l: lid, n: scope[1] });
+  };
   if (existing) {
     run("MATCH (c:Correction {id: $c}), (l:Lesson {id: $l}) MERGE (c)-[:REPEATS]->(l)", { c: cid, l: existing.id });
-    attach(existing.id); return { repeat: true, lesson: existing };
+    attach(existing.id);
+    return { repeat: true, lesson: existing, correction: cid };
   }
   const lid = id8();
   run("CREATE (:Lesson {id: $id, text: $t, created: datetime(), status: 'active'})", { id: lid, t: said });
   run("MATCH (c:Correction {id: $c}), (l:Lesson {id: $l}) MERGE (c)-[:TAUGHT]->(l)", { c: cid, l: lid });
-  attach(lid); return { repeat: false, lesson: { id: lid, text: said } };
+  attach(lid);
+  if (supersedesId) {
+    run("MATCH (n:Lesson {id: $n}), (o:Lesson {id: $o}) MERGE (n)-[:SUPERSEDES]->(o) WITH n, o OPTIONAL MATCH (n)-[c:CONTRADICTS]-(o) DELETE c RETURN count(*) AS k", { n: lid, o: supersedesId });
+  }
+  return { repeat: false, lesson: { id: lid, text: said }, correction: cid, supersedes: supersedesId || null };
 }
 
 function renderStats() {
   const s = run(`RETURN COUNT { (:Lesson) } AS lessons, COUNT { (:Correction) } AS corrections,
     COUNT { (:Correction)-[:REPEATS]->() } AS repeats, COUNT { ()-[:SUPERSEDES]->() } AS superseded,
     COUNT { ()-[:CONTRADICTS]->() } AS conflicts, COUNT { (:Recall) } AS recalls`)[0];
-  $("#stats").innerHTML = [["lessons", "lessons"], ["corrections", "corrections"], ["repeats", "times told twice"],
-    ["superseded", "superseded"], ["conflicts", "open conflicts"], ["recalls", "recalls logged"]]
-    .map(([k, l]) => `<div><b>${s[k]}</b>${l}</div>`).join("");
+  const items = [
+    ["lessons", "Active & archived lessons", ""],
+    ["corrections", "Corrections logged", ""],
+    ["repeats", "Times told twice", "rep"],
+    ["superseded", "Superseded rules", ""],
+    ["conflicts", "Open conflicts", "warn"],
+    ["recalls", "Recalls traced", ""]
+  ];
+  $("#stats").innerHTML = items.map(([k, l, cls]) => `<div class="stat-card ${cls}"><b>${s[k]}</b><span>${l}</span></div>`).join("");
 }
 
-function renderRecall() {
-  const project = $("#proj").value, prompt = $("#prompt").value;
-  const hits = recall(project, prompt);
-  $("#hits").innerHTML = hits.map((h, i) => `<li><span class="score">${h.score}</span><span class="t">${i + 1}. ${esc(h.text)}</span>
-    <div class="chips">${h.why.map(w => `<span class="chip">${esc(w)}</span>`).join("")}
-    ${h.repeats ? `<span class="chip rep">told ${h.repeats + 1}×</span>` : ""}
-    ${h.replaced ? `<span class="chip sup">replaces ${h.replaced} older</span>` : ""}
-    ${h.conflicts.length ? `<span class="chip con">conflicts with ${h.conflicts.join(", ")}</span>` : ""}</div></li>`).join("")
-    || "<li>No lessons apply here.</li>";
-  $("#ctx").textContent = hits.length ? ["<toldonce>", "Lessons from earlier corrections that apply to this request. Follow them:",
-    ...hits.map(h => `- ${h.text}${h.repeats ? ` (told ${h.repeats + 1} times)` : ""}${h.conflicts.length ? ` [conflicts with ${h.conflicts.join(", ")}: ask before choosing]` : ""}`),
-    "</toldonce>"].join("\n") : "(nothing injected)";
-  renderStats(); drawGraph(new Set(hits.map(h => h.id)));
+function refreshSelectors() {
+  const curProj = $("#proj").value || "storefront";
+  const projs = run("MATCH (p:Project) RETURN p.name AS n ORDER BY n");
+  $("#proj").innerHTML = projs.map(r => `<option value="${esc(r.n)}" ${r.n === curProj ? "selected" : ""}>${esc(r.n)}</option>`).join("");
+  updateProjectTools();
+
+  const curSup = $("#supersedesSel").value;
+  const activeLessons = run("MATCH (l:Lesson) WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) } RETURN l.id AS id, l.text AS text ORDER BY l.id");
+  $("#supersedesSel").innerHTML = `<option value="">— None (independent lesson) —</option>` +
+    activeLessons.map(l => `<option value="${esc(l.id)}" ${l.id === curSup ? "selected" : ""}>[${esc(l.id)}] ${esc(trunc(l.text, 58))}</option>`).join("");
+
+  updateScopeSuggestions();
 }
 
-// --- small force layout, no dependencies --------------------------------------------------
-function drawGraph(hot) {
-  const nodes = run(`MATCH (n) WHERE NOT n:Recall RETURN elementId(n) AS k, labels(n)[0] AS label,
-      coalesce(n.name, n.text, n.said) AS name, n.id AS id, EXISTS { (:Lesson)-[:SUPERSEDES]->(n) } AS old`);
-  const links = run(`MATCH (a)-[r]->(b) WHERE NOT a:Recall RETURN elementId(a) AS s, elementId(b) AS t, type(r) AS type`);
-  const svg = $("#graph"), Wd = svg.clientWidth || 600, H = svg.clientHeight || 560;
-  const idx = new Map(nodes.map((n, i) => [n.k, i]));
-  const color = { Lesson: "var(--lesson)", Project: "var(--project)", Tool: "var(--tool)", Task: "var(--task)", Correction: "var(--corr)" };
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  nodes.forEach(n => { n.x = Wd / 2 + (rnd() - .5) * Wd * .8; n.y = H / 2 + (rnd() - .5) * H * .8; n.vx = n.vy = 0;
-    n.r = n.label === "Lesson" ? 8 : n.label === "Correction" ? 3.5 : 6.5; });
-  const L = links.filter(l => idx.has(l.s) && idx.has(l.t)).map(l => ({ ...l, a: nodes[idx.get(l.s)], b: nodes[idx.get(l.t)] }));
-  for (let it = 0; it < 320; it++) {
-    const alpha = 1 - it / 320;
-    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
-      const a = nodes[i], b = nodes[j]; let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + .01;
-      const f = 900 / d2 * alpha; a.vx += dx * f / 30; a.vy += dy * f / 30; b.vx -= dx * f / 30; b.vy -= dy * f / 30; }
-    for (const l of L) { const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, d = Math.hypot(dx, dy) || 1;
-      const want = l.type === "TAUGHT" || l.type === "REPEATS" ? 22 : 70, f = (d - want) / d * .06 * alpha;
-      l.a.vx += dx * f; l.a.vy += dy * f; l.b.vx -= dx * f; l.b.vy -= dy * f; }
-    for (const n of nodes) { n.vx += (Wd / 2 - n.x) * .004 * alpha; n.vy += (H / 2 - n.y) * .004 * alpha;
-      n.x = Math.max(14, Math.min(Wd - 14, n.x + (n.vx *= .6))); n.y = Math.max(14, Math.min(H - 14, n.y + (n.vy *= .6))); }
+function updateProjectTools() {
+  const p = $("#proj").value;
+  const tools = run("MATCH (:Project {name: $p})-[:USES]->(t:Tool) RETURN t.name AS n ORDER BY n", { p }).map(r => r.n);
+  $("#projTools").innerHTML = tools.length
+    ? tools.map(t => `<span class="chip tool">${esc(t)}</span>`).join("")
+    : `<span style="font-size:12px;color:var(--muted)">(none)</span>`;
+}
+
+function updateScopeSuggestions() {
+  const kind = $("#kind").value;
+  const wrap = $("#scopeNameWrap");
+  if (kind === "project" || kind === "") {
+    wrap.style.opacity = "0.55";
+    $("#scopeName").disabled = true;
+    $("#scopeName").value = kind === "project" ? ($("#proj").value || "") : "(global)";
+  } else {
+    wrap.style.opacity = "1";
+    $("#scopeName").disabled = false;
+    if ($("#scopeName").value === "(global)" || $("#scopeName").value === $("#proj").value) $("#scopeName").value = "";
+    const rows = kind === "tool"
+      ? run("MATCH (t:Tool) RETURN t.name AS n ORDER BY n")
+      : run("MATCH (k:Task) RETURN k.name AS n ORDER BY n");
+    $("#scopeSuggestions").innerHTML = rows.map(r => `<option value="${esc(r.n)}">`).join("");
+    $("#scopeName").placeholder = kind === "tool" ? "e.g. git, python, vercel, docker…" : "e.g. copy, commit, review…";
   }
-  const dash = { SUPERSEDES: "6 4", CONTRADICTS: "2 3" };
-  const stroke = t => t === "CONTRADICTS" ? "var(--warn)" : t === "SUPERSEDES" ? "var(--ok)" : t === "REPEATS" ? "var(--accent)" : "var(--line)";
-  svg.setAttribute("viewBox", `0 0 ${Wd} ${H}`);
-  svg.innerHTML = L.map(l => `<line x1="${l.a.x}" y1="${l.a.y}" x2="${l.b.x}" y2="${l.b.y}" stroke="${stroke(l.type)}"
-      stroke-width="${l.type === "CONTRADICTS" || l.type === "SUPERSEDES" ? 2 : 1.2}" ${dash[l.type] ? `stroke-dasharray="${dash[l.type]}"` : ""}><title>${l.type}</title></line>`).join("")
-    + nodes.map(n => { const isHot = n.label === "Lesson" && hot.has(n.id);
-      return `<g opacity="${n.old ? .45 : 1}"><circle cx="${n.x}" cy="${n.y}" r="${isHot ? n.r + 3 : n.r}" fill="${color[n.label]}"
-        stroke="${isHot ? "var(--ink)" : "var(--paper)"}" stroke-width="${isHot ? 2.5 : 1.5}"><title>${n.label}: ${esc(n.name)}${n.old ? " (superseded)" : ""}</title></circle>
-        ${n.label !== "Correction" && n.label !== "Lesson" ? `<text x="${n.x + 9}" y="${n.y + 4}" font-size="11" font-family="JetBrains Mono" fill="var(--muted)">${esc(n.name)}</text>` : ""}</g>`; }).join("");
+}
+
+function renderPresets() {
+  $("#presetsRow").innerHTML = PRESETS.map(p =>
+    `<button type="button" class="preset-btn ${p.id === activePresetId ? "active" : ""}" data-preset="${p.id}">
+      <span>${esc(p.label)}</span><span class="tag">${esc(p.tag)}</span>
+    </button>`
+  ).join("");
+  const cur = PRESETS.find(p => p.id === activePresetId);
+  $("#scenarioCallout").innerHTML = cur
+    ? `<div><strong>${esc(cur.label)}:</strong> ${esc(cur.callout)}</div>`
+    : `<div><strong>Custom Query:</strong> Exploring live Relate traversal for <code>${esc($("#proj").value)}</code>.</div>`;
+}
+
+function applyPreset(id) {
+  const p = PRESETS.find(x => x.id === id);
+  if (!p) return;
+  activePresetId = id;
+  focusedLessonId = null;
+  $("#proj").value = p.project;
+  updateProjectTools();
+  updateScopeSuggestions();
+  $("#prompt").value = p.prompt;
+  renderPresets();
+  renderRecall();
+  if (p.cypherKey && CYPHER_PRESETS[p.cypherKey]) {
+    $("#cy").value = CYPHER_PRESETS[p.cypherKey];
+    runCypherConsole();
+  }
+}
+
+function renderRecall(keepLayout = false) {
+  const project = $("#proj").value, prompt = $("#prompt").value;
+  updateProjectTools();
+  const { hits, trace } = recall(project, prompt, true);
+  lastHits = hits;
+  lastTrace = trace;
+
+  $("#latencyBadge").textContent = `${trace.totalMs.toFixed(2)} ms · ${hits.length} hit${hits.length === 1 ? "" : "s"}`;
+
+  $("#hits").innerHTML = hits.map((h, i) => {
+    const isFocused = focusedLessonId === h.id;
+    const isNew = newlyLearnedId === h.id;
+    return `<li data-lid="${esc(h.id)}" class="${isFocused ? "focused" : ""}">
+      <div class="hit-top">
+        <div style="display:flex;align-items:baseline"><span class="hit-rank">${i + 1}</span><span class="t">${esc(h.text)}</span></div>
+        <span class="score">${h.score.toFixed(2)}</span>
+      </div>
+      <div class="chips">
+        ${isNew ? `<span class="chip new-badge">JUST LEARNED</span>` : ""}
+        ${h.why.map(w => `<span class="chip ${w.kind}">${esc(w.text)}</span>`).join("")}
+        ${h.repeats ? `<span class="chip rep">told ${h.repeats + 1}×</span>` : ""}
+        ${h.replaced ? `<span class="chip sup">replaces ${h.replaced} older</span>` : ""}
+        ${h.conflicts.length ? `<span class="chip con">conflicts with ${esc(h.conflicts.join(", "))}</span>` : ""}
+      </div>
+      <div class="hit-path">${h.paths.slice(0, 2).map(esc).join("<br>")}</div>
+    </li>`;
+  }).join("") || `<li style="cursor:default;color:var(--muted)">No lessons apply to this project and prompt.</li>`;
+
+  $("#hits").querySelectorAll("li[data-lid]").forEach(el => {
+    el.addEventListener("mouseenter", () => {
+      if (!focusedLessonId) drawGraphSVG(el.dataset.lid);
+    });
+    el.addEventListener("mouseleave", () => {
+      if (!focusedLessonId) drawGraphSVG(null);
+    });
+    el.addEventListener("click", () => {
+      const lid = el.dataset.lid;
+      focusedLessonId = focusedLessonId === lid ? null : lid;
+      $("#clearFocusBtn").style.display = focusedLessonId ? "inline-block" : "none";
+      $("#hits").querySelectorAll("li[data-lid]").forEach(li => li.classList.toggle("focused", li.dataset.lid === focusedLessonId));
+      const node = graphNodes.find(n => n.label === "Lesson" && n.id === lid);
+      if (node) inspectNode(node.k);
+      drawGraphSVG(focusedLessonId);
+    });
+  });
+
+  $("#ctx").textContent = hits.length ? [
+    "<toldonce>",
+    "Lessons from earlier corrections that apply to this request. Follow them:",
+    ...hits.map(h => `- ${h.text}${h.repeats ? ` (told ${h.repeats + 1} times)` : ""}${h.conflicts.length ? ` [conflicts with ${h.conflicts.join(", ")}: ask before choosing]` : ""}  <!-- ${h.id}: ${h.why.map(w => w.text).join(", ")} -->`),
+    "</toldonce>"
+  ].join("\n") : "(nothing injected — zero rules matched)";
+
+  // Live recall.cypher Trace Drawer
+  $("#traceMetrics").innerHTML = `
+    <span class="metric-pill fast">Total: ${trace.totalMs.toFixed(2)} ms</span>
+    <span class="metric-pill">FULLTEXT SEARCH: ${trace.ftMs.toFixed(2)} ms</span>
+    <span class="metric-pill">recall.cypher: ${trace.graphMs.toFixed(2)} ms</span>
+    <span class="metric-pill">Candidates: ${trace.candidateCount} → Top ${hits.length}</span>
+  `;
+  $("#tracePaths").innerHTML = hits.map((h, i) => `
+    <li data-lid="${esc(h.id)}">
+      <div class="tp-head"><span>#${i + 1} [${esc(h.id)}] ${esc(trunc(h.text, 54))}</span><span>score ${h.score.toFixed(2)}</span></div>
+      <div class="tp-edges">${h.paths.map(esc).join(" · ")}</div>
+    </li>
+  `).join("") || `<li style="color:var(--muted)">No matching graph paths.</li>`;
+  $("#tracePaths").querySelectorAll("li[data-lid]").forEach(li => {
+    li.addEventListener("click", () => {
+      const lid = li.dataset.lid;
+      focusedLessonId = focusedLessonId === lid ? null : lid;
+      $("#clearFocusBtn").style.display = focusedLessonId ? "inline-block" : "none";
+      const node = graphNodes.find(n => n.label === "Lesson" && n.id === lid);
+      if (node) inspectNode(node.k);
+      drawGraphSVG(focusedLessonId);
+    });
+  });
+  $("#traceParams").textContent = JSON.stringify({ ...trace.params, ft: trace.ft || "(none)" }, null, 2);
+  $("#traceCypher").textContent = RECALL.trim();
+
+  renderStats();
+  rebuildGraphData(keepLayout);
+  drawGraphSVG(focusedLessonId);
+}
+
+// --- Interactive SVG Force Graph Engine (Zero External Dependencies) -----------------------
+function rebuildGraphData(preservePositions = false) {
+  const prevPos = new Map(graphNodes.map(n => [n.k, { x: n.x, y: n.y }]));
+  const nodes = run(`MATCH (n) WHERE NOT n:Recall
+    RETURN elementId(n) AS k, labels(n)[0] AS label,
+           coalesce(n.name, n.text, n.said) AS name,
+           n.id AS id, n.status AS status,
+           EXISTS { (:Lesson)-[:SUPERSEDES]->(n) } AS old,
+           COUNT { (:Correction)-[:REPEATS]->(n) } AS repeats`);
+  const links = run(`MATCH (a)-[r]->(b) WHERE NOT a:Recall AND NOT b:Recall
+    RETURN elementId(a) AS s, elementId(b) AS t, type(r) AS type`);
+
+  const Wd = 820, H = 560;
+  let seed = 42;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+  // Deterministic semantic columns spaced evenly vertically to prevent overlap & label clipping
+  const bandX = { Project: 96, Tool: 260, Task: 260, Lesson: 475, Correction: 755 };
+  const groups = { Project: [], Tool: [], Task: [], Lesson: [], Correction: [] };
+  nodes.forEach(n => { (groups[n.label] || (groups[n.label] = [])).push(n); });
+  Object.entries(groups).forEach(([lbl, arr]) => {
+    arr.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    arr.forEach((n, idxInGrp) => {
+      const prev = preservePositions ? prevPos.get(n.k) : null;
+      if (prev) {
+        n.x = prev.x; n.y = prev.y;
+      } else {
+        const bx = bandX[lbl] || Wd / 2;
+        const span = H - 100;
+        const step = arr.length > 1 ? span / (arr.length - 1) : 0;
+        n.x = bx + (lbl === "Lesson" ? ((idxInGrp % 2) * 44 - 22) : (rnd() - 0.5) * 32);
+        n.y = arr.length > 1 ? 56 + idxInGrp * step : H / 2;
+      }
+      n.vx = 0; n.vy = 0;
+      n.r = n.label === "Project" ? 13 : n.label === "Lesson" ? 11 : n.label === "Tool" || n.label === "Task" ? 9.5 : 4.5;
+    });
+  });
+
+  const idx = new Map(nodes.map((n, i) => [n.k, i]));
+  const L = links.filter(l => idx.has(l.s) && idx.has(l.t)).map(l => ({ ...l, a: nodes[idx.get(l.s)], b: nodes[idx.get(l.t)] }));
+
+  const iters = preservePositions ? 50 : 260;
+  for (let it = 0; it < iters; it++) {
+    const alpha = (1 - it / iters) * (preservePositions ? 0.3 : 0.85);
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy + 1;
+        const sameBand = a.label === b.label;
+        const rep = (a.label === "Correction" && b.label === "Correction") ? 450 : sameBand ? 2400 : 1500;
+        const f = (rep / d2) * alpha;
+        const stepX = Math.max(-14, Math.min(14, dx * f / 26));
+        const stepY = Math.max(-16, Math.min(16, dy * f / 22));
+        a.vx += stepX; a.vy += stepY; b.vx -= stepX; b.vy -= stepY;
+      }
+    }
+    for (const l of L) {
+      const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const want = l.type === "TAUGHT" || l.type === "REPEATS" ? 64 : l.type === "SUPERSEDES" || l.type === "CONTRADICTS" ? 70 : 135;
+      const f = ((d - want) / d) * 0.055 * alpha;
+      l.a.vx += dx * f; l.a.vy += dy * f; l.b.vx -= dx * f; l.b.vy -= dy * f;
+    }
+    for (const n of nodes) {
+      const targetX = bandX[n.label] || Wd / 2;
+      n.vx += (targetX - n.x) * 0.032 * alpha;
+      n.vy += (H / 2 - n.y) * 0.004 * alpha;
+      const maxX = n.label === "Lesson" ? 560 : n.label === "Correction" ? Wd - 24 : 390;
+      const minX = n.label === "Lesson" ? 450 : n.label === "Project" ? 56 : 44;
+      n.x = Math.max(minX, Math.min(maxX, n.x + (n.vx *= 0.6)));
+      n.y = Math.max(46, Math.min(H - 36, n.y + (n.vy *= 0.6)));
+    }
+  }
+
+  // Enforce clean non-overlapping vertical spacing for Lesson pills
+  const lessonNodes = nodes.filter(n => n.label === "Lesson").sort((a, b) => a.y - b.y);
+  if (lessonNodes.length > 1) {
+    const minY = 52, maxY = H - 34;
+    const gap = Math.min(34, (maxY - minY) / (lessonNodes.length - 1));
+    for (let pass = 0; pass < 4; pass++) {
+      for (let i = 1; i < lessonNodes.length; i++) {
+        if (lessonNodes[i].y - lessonNodes[i - 1].y < gap) {
+          const mid = (lessonNodes[i].y + lessonNodes[i - 1].y) / 2;
+          lessonNodes[i - 1].y = Math.max(minY, mid - gap / 2);
+          lessonNodes[i].y = Math.min(maxY, mid + gap / 2);
+        }
+      }
+    }
+  }
+
+  graphNodes = nodes;
+  graphLinks = L;
+  nodeByK = new Map(nodes.map(n => [n.k, n]));
+}
+
+function computeActiveSubgraph(singleLessonId) {
+  const project = $("#proj").value;
+  const targetHits = singleLessonId ? lastHits.filter(h => h.id === singleLessonId) : lastHits;
+  const hotLessonIds = new Set(targetHits.map(h => h.id));
+  const rankById = new Map(lastHits.map((h, i) => [h.id, i + 1]));
+  const activeNodeKs = new Set();
+  const activeEdgeIdx = new Set();
+  const supersededByActiveKs = new Set();
+
+  const projNode = graphNodes.find(n => n.label === "Project" && n.name === project);
+  if (projNode) activeNodeKs.add(projNode.k);
+
+  const matchedTools = new Set();
+  const matchedTasks = new Set();
+  const conflictIds = new Set();
+  targetHits.forEach(h => {
+    h.tools.forEach(t => matchedTools.add(t));
+    h.tasks.forEach(t => matchedTasks.add(t));
+    h.conflicts.forEach(c => conflictIds.add(c));
+  });
+
+  graphNodes.forEach(n => {
+    if (n.label === "Lesson" && hotLessonIds.has(n.id)) activeNodeKs.add(n.k);
+    if (n.label === "Tool" && matchedTools.has(n.name)) activeNodeKs.add(n.k);
+    if (n.label === "Task" && matchedTasks.has(n.name)) activeNodeKs.add(n.k);
+  });
+
+  graphLinks.forEach((l, i) => {
+    const a = l.a, b = l.b;
+    // Active Project -[:USES]-> Matched Tool
+    if (l.type === "USES" && projNode && a.k === projNode.k && b.label === "Tool" && matchedTools.has(b.name)) {
+      activeEdgeIdx.add(i); activeNodeKs.add(a.k); activeNodeKs.add(b.k);
+    }
+    // Hot Lesson -[:APPLIES_TO]-> Active Project / Matched Tool / Matched Task
+    if (l.type === "APPLIES_TO" && a.label === "Lesson" && hotLessonIds.has(a.id)) {
+      if ((projNode && b.k === projNode.k) || (b.label === "Tool" && matchedTools.has(b.name)) || (b.label === "Task" && matchedTasks.has(b.name))) {
+        activeEdgeIdx.add(i); activeNodeKs.add(a.k); activeNodeKs.add(b.k);
+      }
+    }
+    // Hot Lesson -[:SUPERSEDES]-> Old Lesson
+    if (l.type === "SUPERSEDES" && a.label === "Lesson" && hotLessonIds.has(a.id)) {
+      activeEdgeIdx.add(i); activeNodeKs.add(a.k); activeNodeKs.add(b.k); supersededByActiveKs.add(b.k);
+    }
+    // Hot Lesson -[:CONTRADICTS]- Other Lesson
+    if (l.type === "CONTRADICTS" && ((a.label === "Lesson" && hotLessonIds.has(a.id)) || (b.label === "Lesson" && hotLessonIds.has(b.id)))) {
+      activeEdgeIdx.add(i); activeNodeKs.add(a.k); activeNodeKs.add(b.k);
+    }
+    // Correction -[:REPEATS]-> Hot Lesson
+    if (l.type === "REPEATS" && b.label === "Lesson" && hotLessonIds.has(b.id)) {
+      activeEdgeIdx.add(i); activeNodeKs.add(a.k); activeNodeKs.add(b.k);
+    }
+  });
+
+  return { hotLessonIds, rankById, activeNodeKs, activeEdgeIdx, supersededByActiveKs, projNode };
+}
+
+function drawGraphSVG(singleLessonId = null) {
+  const svg = $("#graph");
+  const { hotLessonIds, rankById, activeNodeKs, activeEdgeIdx, supersededByActiveKs, projNode } = computeActiveSubgraph(singleLessonId);
+
+  const visibleNodes = graphNodes.filter(n => {
+    if (graphMode === "core" && n.label === "Correction") return false;
+    if (graphMode === "active" && !activeNodeKs.has(n.k)) return false;
+    return true;
+  });
+  const visSet = new Set(visibleNodes.map(n => n.k));
+  const visibleLinks = graphLinks.map((l, i) => ({ l, i })).filter(({ l }) => visSet.has(l.a.k) && visSet.has(l.b.k));
+
+  const edgeColor = (type, active) => {
+    if (type === "CONTRADICTS") return "var(--warn)";
+    if (type === "SUPERSEDES") return "var(--ok)";
+    if (type === "REPEATS") return "var(--accent)";
+    if (type === "USES") return active ? "var(--project)" : "var(--edge-dim)";
+    if (type === "APPLIES_TO") return active ? "var(--lesson)" : "var(--edge-dim)";
+    return "var(--edge-dim)";
+  };
+
+  const markerId = (type, active) => {
+    if (type === "CONTRADICTS") return "arr-warn";
+    if (type === "SUPERSEDES") return "arr-ok";
+    if (type === "REPEATS") return "arr-accent";
+    if (type === "USES" && active) return "arr-proj";
+    if (type === "APPLIES_TO" && active) return "arr-lesson";
+    return "arr-dim";
+  };
+
+  const defs = `<defs>
+    <marker id="arr-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--edge-dim)"/></marker>
+    <marker id="arr-proj" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--project)"/></marker>
+    <marker id="arr-lesson" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--lesson)"/></marker>
+    <marker id="arr-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--ok)"/></marker>
+    <marker id="arr-warn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--warn)"/></marker>
+    <marker id="arr-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--accent)"/></marker>
+  </defs>`;
+
+  const edgesHtml = visibleLinks.map(({ l, i }) => {
+    const isActive = activeEdgeIdx.has(i);
+    const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, d = Math.hypot(dx, dy) || 1;
+    const padA = l.a.r + 3, padB = l.b.r + 7;
+    const x1 = l.a.x + (dx / d) * padA, y1 = l.a.y + (dy / d) * padA;
+    const x2 = l.b.x - (dx / d) * padB, y2 = l.b.y - (dy / d) * padB;
+    const col = edgeColor(l.type, isActive);
+    const dash = l.type === "SUPERSEDES" ? "6 4" : l.type === "CONTRADICTS" ? "3 3" : (isActive && l.type === "USES" ? "8 4" : "");
+    const sw = isActive ? 2.5 : (l.type === "CONTRADICTS" || l.type === "SUPERSEDES" ? 1.8 : 1.1);
+    const op = isActive ? 0.96 : (activeEdgeIdx.size ? 0.24 : 0.65);
+    const flowCls = isActive && (l.type === "USES" || l.type === "SUPERSEDES") ? "edge-flow" : "";
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const labelHtml = isActive && (l.type !== "TAUGHT")
+      ? `<g pointer-events="none"><rect x="${mx - l.type.length * 3.1 - 4}" y="${my - 7}" width="${l.type.length * 6.2 + 8}" height="13" rx="3" fill="var(--paper)" stroke="${col}" stroke-width="0.9" opacity="0.94"/><text x="${mx}" y="${my + 2.5}" text-anchor="middle" font-size="8.5" font-weight="600" font-family="JetBrains Mono" fill="${col}">${l.type}</text></g>`
+      : "";
+    return `<g opacity="${op}">
+      <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+        stroke="${col}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ""} class="${flowCls}"
+        marker-end="url(#${markerId(l.type, isActive)})"><title>${l.type}: ${esc(l.a.name)} → ${esc(l.b.name)}</title></line>
+      ${labelHtml}
+    </g>`;
+  }).join("");
+
+  const colorMap = { Lesson: "var(--lesson)", Project: "var(--project)", Tool: "var(--tool)", Task: "var(--task)", Correction: "var(--corr)" };
+
+  const nodesHtml = visibleNodes.map(n => {
+    const isHotLesson = n.label === "Lesson" && hotLessonIds.has(n.id);
+    const isActiveProj = projNode && n.k === projNode.k;
+    const isInActive = activeNodeKs.has(n.k);
+    const isSelected = selectedNodeK === n.k;
+    const isNew = n.label === "Lesson" && newlyLearnedId === n.id;
+    const isSuperseded = n.old;
+    const dim = activeNodeKs.size > 0 && !isInActive && !isSelected;
+    const op = isSuperseded ? (supersededByActiveKs.has(n.k) ? 0.68 : 0.35) : (dim ? 0.38 : 1);
+    const fill = colorMap[n.label] || "var(--muted)";
+    const r = isHotLesson ? n.r + 2.5 : n.r;
+
+    let shape = "";
+    if (n.label === "Project") {
+      const pw = Math.max(70, n.name.length * 7.2 + 20);
+      shape = `<rect x="${(n.x - pw / 2).toFixed(1)}" y="${(n.y - 13).toFixed(1)}" width="${pw}" height="26" rx="13" fill="${fill}" stroke="${isActiveProj || isSelected ? "var(--ink)" : "var(--paper)"}" stroke-width="${isActiveProj ? 2.6 : 1.6}"/>
+        <text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" font-family="JetBrains Mono" fill="#fff">${esc(n.name)}</text>`;
+    } else if (n.label === "Tool" || n.label === "Task") {
+      const pw = Math.max(46, n.name.length * 6.6 + 16);
+      shape = `<rect x="${(n.x - pw / 2).toFixed(1)}" y="${(n.y - 10).toFixed(1)}" width="${pw}" height="20" rx="${n.label === "Task" ? 10 : 4}" fill="${fill}" stroke="${isInActive || isSelected ? "var(--ink)" : "var(--paper)"}" stroke-width="${isInActive ? 2 : 1.3}"/>
+        <text x="${n.x.toFixed(1)}" y="${(n.y + 3.5).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="600" font-family="JetBrains Mono" fill="#fff">${esc(n.name)}</text>`;
+    } else if (n.label === "Lesson") {
+      const rank = rankById.get(n.id);
+      const pulse = isNew ? `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r + 7}" fill="none" stroke="var(--ok)" class="pulse-ring"/>` : "";
+      const ring = isHotLesson ? `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r + 4}" fill="none" stroke="var(--lesson)" stroke-width="1.6" stroke-opacity="0.45"/>` : "";
+      const txt = trunc(n.name, 26);
+      const lblW = txt.length * 5.9 + 10;
+      const lx = n.x + r + 5;
+      const shortLbl = (isHotLesson || isSelected || supersededByActiveKs.has(n.k))
+        ? `<g pointer-events="none"><rect x="${lx.toFixed(1)}" y="${(n.y - 8.5).toFixed(1)}" width="${lblW.toFixed(1)}" height="17" rx="3" fill="var(--paper)" fill-opacity="0.88" stroke="var(--line)" stroke-width="0.7"/><text x="${(lx + 5).toFixed(1)}" y="${(n.y + 3.2).toFixed(1)}" font-size="10.2" font-weight="${isHotLesson ? "600" : "500"}" font-family="Inter" fill="var(--ink)" ${isSuperseded ? 'text-decoration="line-through"' : ""}>${esc(txt)}</text></g>`
+        : "";
+      shape = `${pulse}${ring}
+        <circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r}" fill="${fill}" stroke="${isSelected ? "var(--ink)" : isHotLesson ? "var(--ink)" : "var(--paper)"}" stroke-width="${isSelected ? 3 : isHotLesson ? 2.2 : 1.5}" ${isSuperseded ? 'stroke-dasharray="3 2"' : ""}/>
+        ${rank ? `<text x="${n.x.toFixed(1)}" y="${(n.y + 3.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" font-family="JetBrains Mono" fill="#fff">${rank}</text>` : ""}
+        ${shortLbl}`;
+    } else {
+      shape = `<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="${r}" fill="${fill}" stroke="${isSelected ? "var(--ink)" : "var(--paper)"}" stroke-width="${isSelected ? 2 : 1}"/>`;
+    }
+
+    return `<g class="gnode" data-k="${esc(n.k)}" opacity="${op}" style="cursor:pointer">
+      <title>:${n.label} ${n.id ? `[${n.id}] ` : ""}${esc(n.name)}${n.old ? " (SUPERSEDED)" : ""}${n.repeats ? ` (told ${n.repeats + 1}x)` : ""}</title>
+      ${shape}
+    </g>`;
+  }).join("");
+
+  svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+  svg.innerHTML = defs + edgesHtml + nodesHtml;
+
+  $("#graphOverlay").innerHTML = `
+    <span class="overlay-pill">Nodes: <strong>${visibleNodes.length}</strong>/${graphNodes.length}</span>
+    <span class="overlay-pill">Active Paths: <strong>${activeEdgeIdx.size}</strong> edges</span>
+    ${singleLessonId ? `<span class="overlay-pill">Focused: <strong>${esc(singleLessonId)}</strong></span>` : ""}
+  `;
+}
+
+function inspectNode(k) {
+  selectedNodeK = k;
+  const n = nodeByK.get(k);
+  if (!n) return;
+  const colorMap = { Lesson: "var(--lesson)", Project: "var(--project)", Tool: "var(--tool)", Task: "var(--task)", Correction: "var(--corr)" };
+  const outgoing = graphLinks.filter(l => l.a.k === k);
+  const incoming = graphLinks.filter(l => l.b.k === k);
+
+  let extra = "";
+  if (n.label === "Lesson" && n.id) {
+    const chain = run("MATCH p = (l:Lesson {id: $id})-[:SUPERSEDES*0..]->(o:Lesson) RETURN o.id AS id, o.text AS text, length(p) AS depth ORDER BY depth", { id: n.id });
+    const said = run("MATCH (c:Correction)-[r:TAUGHT|REPEATS]->(:Lesson {id: $id}) RETURN c.said AS said, type(r) AS kind, toString(c.at) AS at ORDER BY at", { id: n.id });
+    const chainHtml = chain.length > 1
+      ? `<div><strong>Supersede chain:</strong> ${chain.map(c => `[${esc(c.id)}] ${esc(trunc(c.text, 44))}`).join(" ⟶ ")}</div>`
+      : "";
+    const saidHtml = said.map(s => `<div>• <b>${esc(s.kind)}</b>: “${esc(s.said)}”</div>`).join("");
+    extra = `<div class="history-box">${chainHtml}${saidHtml || "No corrections recorded."}</div>`;
+  }
+
+  const relChips = [
+    ...outgoing.map(l => `<span class="rel-chip" data-jump="${esc(l.b.k)}">-[:${l.type}]-> :${l.b.label} ${esc(trunc(l.b.name, 26))}</span>`),
+    ...incoming.map(l => `<span class="rel-chip" data-jump="${esc(l.a.k)}">&lt;-[:${l.type}]- :${l.a.label} ${esc(trunc(l.a.name, 26))}</span>`)
+  ].join("");
+
+  $("#inspector").innerHTML = `
+    <div class="inspector-head">
+      <div>
+        <span class="node-tag" style="background:${colorMap[n.label] || "var(--muted)"}">:${esc(n.label)}</span>
+        ${n.id ? `<code style="margin-left:6px;font:600 12px 'JetBrains Mono',monospace">${esc(n.id)}</code>` : ""}
+        ${n.old ? `<span class="chip sup" style="margin-left:6px">SUPERSEDED</span>` : ""}
+        ${n.repeats ? `<span class="chip rep" style="margin-left:6px">told ${n.repeats + 1}×</span>` : ""}
+      </div>
+      <span style="font-size:11.5px;color:var(--muted)">${outgoing.length} out · ${incoming.length} in</span>
+    </div>
+    <div style="font-weight:600;font-size:14px">${esc(n.name)}</div>
+    <div class="inspector-rels">${relChips || `<span style="color:var(--muted);font-size:12px">No edges attached (global scope)</span>`}</div>
+    ${extra}
+  `;
+
+  $("#inspector").querySelectorAll("[data-jump]").forEach(el => {
+    el.addEventListener("click", () => {
+      inspectNode(el.dataset.jump);
+      drawGraphSVG(focusedLessonId);
+    });
+  });
+}
+
+function setupGraphInteraction() {
+  const svg = $("#graph");
+  const svgPoint = e => {
+    const r = svg.getBoundingClientRect();
+    return {
+      x: viewBox.x + ((e.clientX - r.left) / r.width) * viewBox.w,
+      y: viewBox.y + ((e.clientY - r.top) / r.height) * viewBox.h
+    };
+  };
+
+  svg.addEventListener("pointerdown", e => {
+    const g = e.target.closest(".gnode");
+    if (g) {
+      const k = g.dataset.k;
+      const n = nodeByK.get(k);
+      if (n) {
+        const pt = svgPoint(e);
+        draggingNode = { node: n, dx: n.x - pt.x, dy: n.y - pt.y, moved: false };
+        svg.setPointerCapture(e.pointerId);
+        svg.classList.add("dragging");
+      }
+      return;
+    }
+    panning = { startX: e.clientX, startY: e.clientY, vx: viewBox.x, vy: viewBox.y };
+    svg.setPointerCapture(e.pointerId);
+    svg.classList.add("dragging");
+  });
+
+  svg.addEventListener("pointermove", e => {
+    if (draggingNode) {
+      const pt = svgPoint(e);
+      draggingNode.node.x = pt.x + draggingNode.dx;
+      draggingNode.node.y = pt.y + draggingNode.dy;
+      draggingNode.moved = true;
+      drawGraphSVG(focusedLessonId);
+    } else if (panning) {
+      const r = svg.getBoundingClientRect();
+      const dx = ((e.clientX - panning.startX) / r.width) * viewBox.w;
+      const dy = ((e.clientY - panning.startY) / r.height) * viewBox.h;
+      viewBox.x = panning.vx - dx;
+      viewBox.y = panning.vy - dy;
+      svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+    }
+  });
+
+  svg.addEventListener("pointerup", e => {
+    if (draggingNode) {
+      const { node, moved } = draggingNode;
+      draggingNode = null;
+      svg.classList.remove("dragging");
+      if (!moved) {
+        inspectNode(node.k);
+        drawGraphSVG(focusedLessonId);
+      }
+    } else if (panning) {
+      panning = null;
+      svg.classList.remove("dragging");
+    }
+  });
+
+  svg.addEventListener("wheel", e => {
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 1.12 : 0.89;
+    const pt = svgPoint(e);
+    viewBox.w = Math.max(240, Math.min(1600, viewBox.w * factor));
+    viewBox.h = Math.max(180, Math.min(1200, viewBox.h * factor));
+    viewBox.x = pt.x - (pt.x - viewBox.x) * factor;
+    viewBox.y = pt.y - (pt.y - viewBox.y) * factor;
+    svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+  }, { passive: false });
+
+  $("#zoomInBtn").onclick = () => {
+    const cx = viewBox.x + viewBox.w / 2, cy = viewBox.y + viewBox.h / 2;
+    viewBox.w *= 0.82; viewBox.h *= 0.82;
+    viewBox.x = cx - viewBox.w / 2; viewBox.y = cy - viewBox.h / 2;
+    drawGraphSVG(focusedLessonId);
+  };
+  $("#zoomOutBtn").onclick = () => {
+    const cx = viewBox.x + viewBox.w / 2, cy = viewBox.y + viewBox.h / 2;
+    viewBox.w *= 1.22; viewBox.h *= 1.22;
+    viewBox.x = cx - viewBox.w / 2; viewBox.y = cy - viewBox.h / 2;
+    drawGraphSVG(focusedLessonId);
+  };
+  $("#zoomFitBtn").onclick = () => { viewBox = { x: 0, y: 0, w: 820, h: 560 }; drawGraphSVG(focusedLessonId); };
+  $("#relayoutBtn").onclick = () => { rebuildGraphData(false); viewBox = { x: 0, y: 0, w: 820, h: 560 }; drawGraphSVG(focusedLessonId); };
+
+  $("#graphFilter").querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      graphMode = btn.dataset.mode;
+      $("#graphFilter").querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+      drawGraphSVG(focusedLessonId);
+    });
+  });
+}
+
+function runCypherConsole() {
+  const t0 = performance.now();
+  try {
+    const rows = run($("#cy").value);
+    const ms = performance.now() - t0;
+    $("#cyLatency").textContent = `${ms.toFixed(2)} ms · ${rows.length} row${rows.length === 1 ? "" : "s"}`;
+    $("#cyOut").textContent = JSON.stringify(rows, null, 2);
+  } catch (e) {
+    $("#cyLatency").textContent = "error";
+    $("#cyOut").textContent = String(e.message || e);
+  }
+}
+
+function loadFreshDb() {
+  db = new RelateDb();
+  for (const env of db.executeScript(SEED_SQL, null).map(JSON.parse)) {
+    if (env.error) throw new Error(JSON.stringify(env.error));
+  }
+  newlyLearnedId = null;
+  focusedLessonId = null;
+  selectedNodeK = null;
+  $("#clearFocusBtn").style.display = "none";
+  $("#learnOut").innerHTML = "";
+  refreshSelectors();
+  applyPreset("inheritance");
 }
 
 async function main() {
   await init({ module_or_path: new URL("./vendor/relate_bg.wasm", import.meta.url) });
-  db = new RelateDb();
   const [seed, rq] = await Promise.all([fetch("seed.cypher").then(r => r.text()), fetch("recall.cypher").then(r => r.text())]);
+  SEED_SQL = seed;
   RECALL = rq;
-  for (const env of db.executeScript(seed, null).map(JSON.parse)) if (env.error) throw new Error(JSON.stringify(env.error));
-  $("#proj").innerHTML = run("MATCH (p:Project) RETURN p.name AS n ORDER BY n").map(r => `<option ${r.n === "storefront" ? "selected" : ""}>${esc(r.n)}</option>`).join("");
-  $("#status").textContent = "Relate WASM ready · demo store loaded in memory · changes stay in this tab";
-  renderRecall();
-  $("#recallBtn").onclick = renderRecall;
-  $("#learnBtn").onclick = () => {
-    const kind = $("#kind").value, name = kind === "project" ? $("#proj").value : $("#scopeName").value.trim();
-    const r = learn($("#said").value.trim(), kind && name ? [kind, name] : null);
-    $("#learnOut").innerHTML = r.repeat
-      ? `<div class="note rep">Already told: “${esc(r.lesson.text)}”. Counted as a repeat, no duplicate lesson.</div>`
-      : `<div class="note new">New lesson ${r.lesson.id} recorded.</div>`;
-    renderRecall();
+
+  setupGraphInteraction();
+
+  // Theme toggle
+  const applyThemeLabel = () => {
+    const isDark = document.documentElement.dataset.theme === "dark" ||
+      (!document.documentElement.dataset.theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    $("#themeBtn").textContent = isDark ? "Paper Mode" : "Dark Mode";
   };
-  $("#cyBtn").onclick = () => { try { $("#cyOut").textContent = JSON.stringify(run($("#cy").value), null, 2); }
-    catch (e) { $("#cyOut").textContent = String(e.message || e); } };
+  applyThemeLabel();
+  $("#themeBtn").onclick = () => {
+    const cur = document.documentElement.dataset.theme;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const next = cur ? (cur === "dark" ? "light" : "dark") : (prefersDark ? "light" : "dark");
+    document.documentElement.dataset.theme = next;
+    applyThemeLabel();
+  };
+
+  $("#presetsRow").addEventListener("click", e => {
+    const btn = e.target.closest("[data-preset]");
+    if (btn) applyPreset(btn.dataset.preset);
+  });
+
+  $("#proj").addEventListener("change", () => {
+    activePresetId = null;
+    focusedLessonId = null;
+    $("#clearFocusBtn").style.display = "none";
+    updateProjectTools();
+    updateScopeSuggestions();
+    renderPresets();
+    renderRecall(true);
+  });
+
+  $("#kind").addEventListener("change", updateScopeSuggestions);
+
+  $("#recallBtn").onclick = () => {
+    activePresetId = null;
+    focusedLessonId = null;
+    $("#clearFocusBtn").style.display = "none";
+    renderPresets();
+    renderRecall(true);
+  };
+
+  $("#clearFocusBtn").onclick = () => {
+    focusedLessonId = null;
+    $("#clearFocusBtn").style.display = "none";
+    $("#hits").querySelectorAll("li").forEach(li => li.classList.remove("focused"));
+    drawGraphSVG(null);
+  };
+
+  $("#loadCypherBtn").onclick = () => {
+    const p = $("#proj").value, prompt = $("#prompt").value.toLowerCase().replace(/'/g, "\\'");
+    $("#cy").value = RECALL
+      .replace(/\$project/g, `'${p.replace(/'/g, "\\'")}'`)
+      .replace(/\$tools/g, "[]")
+      .replace(/\$text/g, `'${prompt}'`);
+    runCypherConsole();
+    $("#cy").scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  // Quick-fills for Learn Sandbox
+  $("#qfNew").onclick = () => {
+    $("#said").value = "never log raw API keys or tokens in error responses";
+    $("#kind").value = "project";
+    $("#supersedesSel").value = "";
+    updateScopeSuggestions();
+  };
+  $("#qfRepeat").onclick = () => {
+    $("#proj").value = "storefront";
+    updateProjectTools();
+    $("#said").value = "i told you, pnpm not npm in this repo";
+    $("#kind").value = "project";
+    $("#supersedesSel").value = "";
+    updateScopeSuggestions();
+  };
+  $("#qfSupersede").onclick = () => {
+    $("#said").value = "always run unit tests and linter before every git commit";
+    $("#kind").value = "tool";
+    updateScopeSuggestions();
+    $("#scopeName").value = "git";
+    const opt = [...$("#supersedesSel").options].find(o => o.value === "9219c9a2");
+    if (opt) $("#supersedesSel").value = "9219c9a2";
+  };
+
+  $("#learnBtn").onclick = () => {
+    const said = $("#said").value.trim();
+    if (!said) return;
+    const kind = $("#kind").value;
+    const name = kind === "project" ? $("#proj").value : $("#scopeName").value.trim();
+    const supersedesId = $("#supersedesSel").value || null;
+    const scope = kind && name ? [kind, name] : null;
+
+    const r = learn(said, scope, supersedesId);
+    newlyLearnedId = r.lesson.id;
+    refreshSelectors();
+
+    const scopeLabel = scope ? `:${scope[0]} (${scope[1]})` : "global";
+    $("#learnOut").innerHTML = r.repeat
+      ? `<div class="note rep"><strong>Repeat detected!</strong> Matched existing lesson <code>${esc(r.lesson.id)}</code> (“${esc(r.lesson.text)}”). Created <code>(:Correction)-[:REPEATS]->(:Lesson)</code> — zero duplicate created.</div>`
+      : `<div class="note new"><strong>New :Lesson node created in Relate!</strong> ID <code>${esc(r.lesson.id)}</code> attached to <code>${esc(scopeLabel)}</code>${r.supersedes ? ` and <code>-[:SUPERSEDES]->(${esc(r.supersedes)})</code>` : ""}. <button type="button" class="ghost small" id="queryNewBtn" style="margin-left:8px">Query This Rule Now →</button></div>`;
+
+    // Re-run recall & inspect the new/repeated lesson node on the graph
+    renderRecall(true);
+    const node = graphNodes.find(n => n.label === "Lesson" && n.id === r.lesson.id);
+    if (node) {
+      inspectNode(node.k);
+      drawGraphSVG(null);
+    }
+
+    const qBtn = $("#queryNewBtn");
+    if (qBtn) {
+      qBtn.onclick = () => {
+        if (scope && scope[0] === "task") {
+          $("#prompt").value = `work on ${scope[1]}: ${said}`;
+        } else {
+          $("#prompt").value = said;
+        }
+        renderRecall(true);
+        $("#hits").scrollIntoView({ behavior: "smooth", block: "center" });
+      };
+    }
+  };
+
+  $("#cyBtn").onclick = runCypherConsole;
+  document.querySelectorAll("[data-cy]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $("#cy").value = CYPHER_PRESETS[btn.dataset.cy];
+      runCypherConsole();
+    });
+  });
+
+  $("#resetBtn").onclick = () => {
+    loadFreshDb();
+    $("#status").innerHTML = `<span class="badge-live">READY</span> Relate WASM reset to clean demo store · changes stay in this tab`;
+  };
+
+  loadFreshDb();
+  $("#status").innerHTML = `<span class="badge-live">READY</span> Relate WASM 1.0.2 running locally in-browser · zero backend · shared <code>recall.cypher</code>`;
 }
-main().catch(e => { $("#status").textContent = "failed: " + (e.message || e); console.error(e); });
+
+main().catch(e => {
+  $("#status").textContent = "Failed to initialize Relate WASM: " + (e.message || e);
+  console.error(e);
+});
 </script>
 </body>
 </html>
