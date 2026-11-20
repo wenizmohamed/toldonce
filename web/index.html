@@ -1272,6 +1272,216 @@ pre {
 }
 
 /* ---------------- Lower Showcase Grid: Exploder + 8-Query Benchmark ---------------- */
+.cy-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface-warm);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.cy-meta-bar code {
+  font: 500 11.5px var(--font-mono);
+  background: #FFFFFF;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+}
+
+.cy-preset-btn.active {
+  background: var(--ink);
+  color: #FAF5EE;
+  border-color: var(--ink);
+}
+
+.cy-table-wrap {
+  margin-top: 10px;
+  overflow-x: auto;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-inner);
+  background: var(--surface-warm);
+}
+
+table.cy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table.cy-table th,
+table.cy-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+table.cy-table th {
+  position: sticky;
+  top: 0;
+  font: 600 10.5px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: #FFFFFF;
+  z-index: 1;
+}
+
+table.cy-table tbody tr {
+  transition: background 0.14s ease;
+}
+
+table.cy-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+table.cy-table tbody tr:hover {
+  background: #FFFFFF;
+}
+
+table.cy-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.cy-table td code {
+  font: 600 11px var(--font-mono);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--ember-deep);
+}
+
+.cy-empty {
+  padding: 18px 14px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ---------------- Scoped Export Card (.claude/rules/ & AGENTS.md) ---------------- */
+.export-card {
+  margin-top: 20px;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.export-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .export-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.export-audit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+@media (max-width: 480px) {
+  .export-audit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.audit-tile {
+  padding: 11px 13px;
+  border-radius: var(--radius-inner);
+  background: var(--surface-warm);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.audit-tile.sage {
+  background: var(--sage-soft);
+  border-color: rgba(47, 125, 79, 0.2);
+}
+
+.audit-tile.amber {
+  background: var(--amber-soft);
+  border-color: rgba(180, 105, 14, 0.2);
+}
+
+.audit-tile-val {
+  font: 600 18px/1.1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.audit-tile.sage .audit-tile-val { color: var(--sage); }
+.audit-tile.amber .audit-tile-val { color: var(--amber); }
+
+.audit-tile-lbl {
+  font: 500 11.5px/1.3 var(--font-body);
+  color: var(--muted);
+}
+
+.check-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font: 500 12.5px/1.3 var(--font-body);
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.check-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--ember);
+  cursor: pointer;
+}
+
+.export-preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.export-path-pill {
+  font: 600 11.5px/1 var(--font-mono);
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: #FAF5EE;
+}
+
+#exportPreview {
+  max-height: 360px;
+  margin-top: 0;
+  font-size: 11.8px;
+  background: var(--surface-warm);
+}
+
 .lower-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
@@ -1472,7 +1682,8 @@ footer code {
       <button type="button" class="nav-tab active" data-target="workspaceSection">Playground</button>
       <button type="button" class="nav-tab" data-target="learnSection">Learn Rule</button>
       <button type="button" class="nav-tab" data-target="cypherSection">Cypher Studio</button>
-      <button type="button" class="nav-tab" data-target="explodeSection">Explode CLAUDE.md</button>
+      <button type="button" class="nav-tab" data-target="exportSection">Export Rules</button>
+      <button type="button" class="nav-tab" data-target="explodeSection">Explode</button>
       <button type="button" class="nav-tab" data-target="benchSection">Benchmark</button>
     </div>
 
@@ -1664,27 +1875,86 @@ footer code {
 
       <section class="card" id="cypherSection">
         <div class="card-head">
-          <h2 class="card-title">Live Relate <em>Cypher</em> Console</h2>
-          <span class="metric-pill" id="cyLatency">0.00 ms</span>
+          <h2 class="card-title">Interactive Live <em>Cypher</em> Console</h2>
+          <span class="metric-pill sage" id="cyLatency">0.00 ms</span>
         </div>
-        <p class="card-sub">Execute modern Cypher directly against the in-browser Relate WASM memory graph.</p>
-        <div class="quick-fills">
-          <button type="button" class="pill-mini" data-cy="repeats">Repeat Leaderboard</button>
-          <button type="button" class="pill-mini" data-cy="inheritance">2-Hop Tool Inheritance</button>
-          <button type="button" class="pill-mini" data-cy="supersedes">Supersede Chains</button>
-          <button type="button" class="pill-mini" data-cy="conflicts">Open Conflicts</button>
-          <button type="button" class="pill-mini" data-cy="provenance">Recall Provenance</button>
+        <p class="card-sub">Execute expert or custom Cypher directly against the real <code>@relate/relate-wasm</code> in-browser graph engine. Click any row with a lesson ID to highlight it above.</p>
+        <div class="quick-fills" id="cyPresets">
+          <button type="button" class="pill-mini cy-preset-btn" data-cy="supersedes">SUPERSEDES*1.. Audit Chain</button>
+          <button type="button" class="pill-mini cy-preset-btn" data-cy="conflicts">CONTRADICTS Conflict Finder</button>
+          <button type="button" class="pill-mini cy-preset-btn active" data-cy="repeats">Top Repeated Corrections</button>
+          <button type="button" class="pill-mini cy-preset-btn" data-cy="matrix">Cross-Repo Tool Matrix</button>
+          <button type="button" class="pill-mini cy-preset-btn" data-cy="provenance">Recall Provenance Audit</button>
         </div>
-        <textarea id="cy" style="font-family:var(--font-mono);font-size:12.5px;min-height:84px">MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
-RETURN l.id AS id, l.text AS lesson, count(c) + 1 AS timesTold
-ORDER BY timesTold DESC</textarea>
-        <div class="btn-row">
-          <button type="button" class="pill-btn solid sm" id="cyBtn">Run Cypher</button>
+        <div class="cy-meta-bar" id="cyDesc">Aggregates <code>(:Correction)-[:REPEATS]-&gt;(:Lesson)</code> edges to rank the corrections your agent keeps forgetting.</div>
+        <textarea id="cy" style="font-family:var(--font-mono);font-size:12.5px;min-height:92px" spellcheck="false">MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
+RETURN l.id AS lessonId, l.text AS lesson, count(c) + 1 AS timesTold,
+       [(l)-[:APPLIES_TO]->(s) | toLower(labels(s)[0]) + ':' + s.name] AS scopes
+ORDER BY timesTold DESC, lessonId</textarea>
+        <div class="btn-row" style="justify-content:space-between">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button type="button" class="pill-btn solid sm" id="cyBtn">Run Cypher</button>
+            <button type="button" class="pill-btn soft sm" id="cyCopyJsonBtn">Copy JSON</button>
+            <span style="font:500 11px var(--font-mono);color:var(--muted-soft)">Ctrl/Cmd + Enter</span>
+          </div>
+          <div class="seg" id="cyViewSeg">
+            <button type="button" data-view="table" class="active">Table</button>
+            <button type="button" data-view="json">JSON</button>
+          </div>
         </div>
-        <pre id="cyOut"></pre>
+        <div class="cy-table-wrap" id="cyTableWrap"></div>
+        <pre id="cyOut" style="display:none"></pre>
       </section>
     </div>
   </div>
+
+  <!-- 1-Click Scoped Export to .claude/rules/ & AGENTS.md -->
+  <section class="card export-card" id="exportSection">
+    <div class="card-head">
+      <h2 class="card-title">1-Click Export to <code>.claude/rules/</code> &amp; <code>AGENTS.md</code> <em>(Scoped)</em></h2>
+      <span class="metric-pill sage" id="exportLatency">0.00 ms · WASM live</span>
+    </div>
+    <p class="card-sub">Queries the live <code>@relate/relate-wasm</code> graph for a single project and compiles a clean, conflict-free, zero-leak instruction pack with full Cypher path provenance comments.</p>
+
+    <div class="export-grid">
+      <div>
+        <div class="field-row">
+          <div>
+            <label for="exportProj">Target Project</label>
+            <select id="exportProj"></select>
+          </div>
+          <div>
+            <label>Output Format</label>
+            <div class="seg" id="exportFmtSeg" style="width:100%;justify-content:space-between">
+              <button type="button" data-fmt="claude" class="active" style="flex:1">.claude/rules/</button>
+              <button type="button" data-fmt="agents" style="flex:1">AGENTS.md</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="check-toggle">
+          <input type="checkbox" id="exportStrictCheck" checked>
+          <span>Strict conflict-free mode (quarantine active <code>:CONTRADICTS</code> pairs into an explicit ask-developer section)</span>
+        </label>
+
+        <div class="export-audit-grid" id="exportAuditGrid"></div>
+
+        <div class="btn-row">
+          <button type="button" class="pill-btn ember" id="exportCopyBtn">Copy Scoped Pack</button>
+          <button type="button" class="pill-btn solid" id="exportDownloadBtn">Download .md</button>
+          <button type="button" class="pill-btn soft sm" id="exportRefreshBtn">Re-query Graph</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="export-preview-head">
+          <span class="export-path-pill" id="exportPathBadge">.claude/rules/toldonce-storefront.md</span>
+          <span class="metric-pill" id="exportCountBadge">0 active rules</span>
+        </div>
+        <pre id="exportPreview"></pre>
+      </div>
+    </div>
+  </section>
 
   <!-- Lower Showcase Bento: CLAUDE.md Exploder + 8-Query Live WASM Benchmark -->
   <div class="lower-grid">
@@ -1780,7 +2050,7 @@ const PRESETS = [
     project: "storefront",
     prompt: "commit the new checkout page copy",
     callout: "Proves 2-hop inheritance: (storefront:Project)-[:USES]->(git:Tool)<-[:APPLIES_TO]-(:Lesson) fires git rules automatically alongside storefront's pnpm rule and task:copy / task:commit lessons.",
-    cypherKey: "inheritance"
+    cypherKey: "matrix"
   },
   {
     id: "isolation",
@@ -1789,7 +2059,7 @@ const PRESETS = [
     project: "trading-bot",
     prompt: "install deps and update strategy params",
     callout: "Proves strict project boundary: storefront's 'Use pnpm, never npm' is EXCLUDED (0 leaks), while trading-bot's strategy guard and inherited python/git tool rules fire cleanly.",
-    cypherKey: "inheritance"
+    cypherKey: "matrix"
   },
   {
     id: "supersedes",
@@ -1821,11 +2091,47 @@ const PRESETS = [
 ];
 
 const CYPHER_PRESETS = {
-  repeats: `MATCH (c:Correction)-[:REPEATS]->(l:Lesson)\nRETURN l.id AS id, l.text AS lesson, count(c) + 1 AS timesTold\nORDER BY timesTold DESC`,
-  inheritance: `MATCH (p:Project)-[:USES]->(t:Tool)<-[:APPLIES_TO]-(l:Lesson)\nWHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }\nRETURN p.name AS project, t.name AS tool, l.id AS lessonId, l.text AS lesson\nORDER BY project, tool`,
-  supersedes: `MATCH path = (newer:Lesson)-[:SUPERSEDES*1..]->(older:Lesson)\nRETURN newer.id AS activeId, newer.text AS activeRule,\n       older.id AS replacedId, older.text AS replacedRule, length(path) AS hops`,
-  conflicts: `MATCH (a:Lesson)-[:CONTRADICTS]->(b:Lesson)\nRETURN a.id AS lessonA, a.text AS ruleA, b.id AS lessonB, b.text AS ruleB`,
-  provenance: `MATCH (r:Recall)-[s:SURFACED]->(l:Lesson)\nRETURN r.project AS project, r.prompt AS prompt, s.rank AS rank, s.score AS score, l.text AS lesson\nORDER BY r.at DESC, s.rank ASC LIMIT 12`
+  supersedes: {
+    desc: "Variable-length <code>-[:SUPERSEDES*1..]-&gt;</code> audit chain: traces every active head rule back through all archived versions and hop depth.",
+    query: `MATCH path = (newer:Lesson)-[:SUPERSEDES*1..]->(older:Lesson)
+RETURN newer.id AS headId, newer.text AS activeRule,
+       older.id AS replacedId, older.text AS replacedRule,
+       length(path) AS depth,
+       [(newer)-[:APPLIES_TO]->(s) | toLower(labels(s)[0]) + ':' + s.name] AS scopes
+ORDER BY depth DESC, headId`
+  },
+  conflicts: {
+    desc: "Symmetric <code>-[:CONTRADICTS]-</code> cluster finder: surfaces active unresolved conflicting rule pairs (excluding superseded or retired rules).",
+    query: `MATCH (a:Lesson)-[:CONTRADICTS]-(b:Lesson)
+WHERE a.id < b.id AND a.status = 'active' AND b.status = 'active'
+  AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(a) }
+  AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(b) }
+RETURN a.id AS lessonA, a.text AS ruleA, b.id AS lessonB, b.text AS ruleB,
+       [(a)-[:APPLIES_TO]->(s) | toLower(labels(s)[0]) + ':' + s.name] AS scopeA,
+       [(b)-[:APPLIES_TO]->(s) | toLower(labels(s)[0]) + ':' + s.name] AS scopeB`
+  },
+  repeats: {
+    desc: "Aggregates <code>(:Correction)-[:REPEATS]-&gt;(:Lesson)</code> edges to rank the corrections your coding agent keeps forgetting.",
+    query: `MATCH (c:Correction)-[:REPEATS]->(l:Lesson)
+RETURN l.id AS lessonId, l.text AS lesson, count(c) + 1 AS timesTold,
+       [(l)-[:APPLIES_TO]->(s) | toLower(labels(s)[0]) + ':' + s.name] AS scopes
+ORDER BY timesTold DESC, lessonId`
+  },
+  matrix: {
+    desc: "Cross-repo 2-hop inheritance matrix: maps every <code>(:Project)-[:USES]-&gt;(:Tool)&lt;-[:APPLIES_TO]-(:Lesson)</code> active rule bundle.",
+    query: `MATCH (p:Project)-[:USES]->(t:Tool)<-[:APPLIES_TO]-(l:Lesson)
+WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+RETURN p.name AS project, t.name AS tool, count(l) AS activeRules,
+       collect(l.id) AS lessonIds
+ORDER BY project, activeRules DESC, tool`
+  },
+  provenance: {
+    desc: "Audits <code>(:Recall)-[:SURFACED {rank, score}]-&gt;(:Lesson)</code> provenance edges recorded live on every in-browser recall.",
+    query: `MATCH (r:Recall)-[s:SURFACED]->(l:Lesson)
+RETURN r.project AS project, r.prompt AS prompt, s.rank AS rank,
+       s.score AS score, l.id AS lessonId, l.text AS lesson
+ORDER BY r.at DESC, s.rank ASC LIMIT 12`
+  }
 };
 
 let db, SEED_SQL = "", RECALL = "";
@@ -1833,6 +2139,8 @@ let graphNodes = [], graphLinks = [], nodeByK = new Map();
 let lastHits = [], lastTrace = null, activePresetId = "inheritance";
 let focusedLessonId = null, selectedNodeK = null, newlyLearnedId = null;
 let graphMode = "all";
+let cyViewMode = "table", activeCyPreset = "repeats", lastCyRows = [];
+let exportFmt = "claude", lastExportPack = null;
 let viewBox = { x: 0, y: 0, w: 840, h: 540 };
 let draggingNode = null, panning = null;
 
@@ -2017,6 +2325,12 @@ function refreshSelectors() {
   $("#proj").innerHTML = projs.map(r => `<option value="${esc(r.n)}" ${r.n === curProj ? "selected" : ""}>${esc(r.n)}</option>`).join("");
   updateProjectTools();
 
+  const expSel = $("#exportProj");
+  if (expSel) {
+    const curExp = expSel.value || curProj;
+    expSel.innerHTML = projs.map(r => `<option value="${esc(r.n)}" ${r.n === curExp ? "selected" : ""}>${esc(r.n)}</option>`).join("");
+  }
+
   const curSup = $("#supersedesSel").value;
   const activeLessons = run("MATCH (l:Lesson) WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) } RETURN l.id AS id, l.text AS text ORDER BY l.id");
   $("#supersedesSel").innerHTML = `<option value="">None (independent lesson)</option>` +
@@ -2071,15 +2385,16 @@ function applyPreset(id) {
   focusedLessonId = null;
   selectedNodeK = null;
   $("#proj").value = p.project;
+  if ($("#exportProj")) $("#exportProj").value = p.project;
   updateProjectTools();
   updateScopeSuggestions();
   $("#prompt").value = p.prompt;
   renderPresets();
   renderRecall();
   if (p.cypherKey && CYPHER_PRESETS[p.cypherKey]) {
-    $("#cy").value = CYPHER_PRESETS[p.cypherKey];
-    runCypherConsole();
+    selectCypherPreset(p.cypherKey);
   }
+  renderScopedExport();
 }
 
 function renderRecall(keepLayout = false) {
@@ -2574,17 +2889,252 @@ function setupGraphInteraction() {
   });
 }
 
+function selectCypherPreset(key) {
+  const preset = CYPHER_PRESETS[key];
+  if (!preset) return;
+  activeCyPreset = key;
+  $("#cy").value = preset.query;
+  $("#cyDesc").innerHTML = preset.desc;
+  document.querySelectorAll("[data-cy]").forEach(b => b.classList.toggle("active", b.dataset.cy === key));
+  runCypherConsole();
+}
+
+function formatCyCell(col, val) {
+  if (val === null || val === undefined) return `<span style="color:var(--muted-soft)">null</span>`;
+  if (Array.isArray(val)) {
+    if (!val.length) return `<span style="color:var(--muted-soft)">[]</span>`;
+    return val.map(v => {
+      const s = String(v);
+      const cls = s.startsWith("project:") ? "proj" : s.startsWith("tool:") ? "tool" : s.startsWith("task:") ? "task" : "";
+      return `<span class="chip ${cls}">${esc(s)}</span>`;
+    }).join(" ");
+  }
+  if (typeof val === "number") {
+    return `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600">${Number.isInteger(val) ? val : val.toFixed(2)}</span>`;
+  }
+  if (/^(id|lessonId|headId|replacedId|lessonA|lessonB)$/i.test(col)) {
+    return `<code>${esc(val)}</code>`;
+  }
+  return esc(String(val));
+}
+
+function renderCypherOutput(rows, errMsg = null) {
+  const wrap = $("#cyTableWrap");
+  const pre = $("#cyOut");
+  if (errMsg) {
+    pre.textContent = errMsg;
+    wrap.innerHTML = `<div class="cy-empty" style="color:var(--ember-deep)">${esc(errMsg)}</div>`;
+  } else {
+    pre.textContent = JSON.stringify(rows, null, 2);
+    if (!rows.length) {
+      wrap.innerHTML = `<div class="cy-empty">Query succeeded with 0 rows.</div>`;
+    } else {
+      const cols = Object.keys(rows[0]);
+      const idCol = cols.find(c => /^(lessonId|headId|id|lessonA)$/i.test(c));
+      const head = `<thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>`;
+      const body = `<tbody>${rows.map(r => {
+        const lid = idCol && typeof r[idCol] === "string" ? r[idCol] : "";
+        return `<tr class="${lid ? "clickable" : ""}" ${lid ? `data-cylid="${esc(lid)}"` : ""}>${cols.map(c => `<td>${formatCyCell(c, r[c])}</td>`).join("")}</tr>`;
+      }).join("")}</tbody>`;
+      wrap.innerHTML = `<table class="cy-table">${head}${body}</table>`;
+      wrap.querySelectorAll("tr[data-cylid]").forEach(tr => {
+        tr.addEventListener("click", () => {
+          const lid = tr.dataset.cylid;
+          const node = graphNodes.find(n => n.label === "Lesson" && n.id === lid);
+          if (node) {
+            focusedLessonId = lid;
+            $("#clearFocusBtn").style.display = "inline-flex";
+            inspectNode(node.k);
+            drawGraphSVG(lid);
+            $("#graphSection").scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+      });
+    }
+  }
+  wrap.style.display = cyViewMode === "table" ? "block" : "none";
+  pre.style.display = cyViewMode === "json" ? "block" : "none";
+}
+
 function runCypherConsole() {
   const t0 = performance.now();
   try {
     const rows = run($("#cy").value);
     const ms = performance.now() - t0;
-    $("#cyLatency").textContent = `${ms.toFixed(2)} ms · ${rows.length} row${rows.length === 1 ? "" : "s"}`;
-    $("#cyOut").textContent = JSON.stringify(rows, null, 2);
+    lastCyRows = rows;
+    const cols = rows.length ? Object.keys(rows[0]).length : 0;
+    $("#cyLatency").textContent = `${ms.toFixed(2)} ms · ${rows.length} row${rows.length === 1 ? "" : "s"}${cols ? ` · ${cols} col${cols === 1 ? "" : "s"}` : ""}`;
+    $("#cyLatency").className = "metric-pill sage";
+    renderCypherOutput(rows, null);
   } catch (e) {
-    $("#cyLatency").textContent = "error";
-    $("#cyOut").textContent = String(e.message || e);
+    lastCyRows = [];
+    $("#cyLatency").textContent = "Cypher error";
+    $("#cyLatency").className = "metric-pill ember";
+    renderCypherOutput([], String(e.message || e));
   }
+}
+
+// --- 1-Click Scoped Export (.claude/rules/ & AGENTS.md) directly from Live Relate WASM ---
+const SCOPED_EXPORT_CYPHER = `MATCH (l:Lesson)
+WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+WITH l,
+  EXISTS { (l)-[:APPLIES_TO]->(:Project {name: $project}) } AS hereProject,
+  EXISTS { (l)-[:APPLIES_TO]->(p:Project) WHERE p.name <> $project } AS otherProject,
+  [(l)-[:APPLIES_TO]->(t:Tool) WHERE EXISTS { (:Project {name: $project})-[:USES]->(t) } | t.name] AS tools,
+  [(l)-[:APPLIES_TO]->(k:Task) | k.name] AS tasks,
+  COUNT { (l)-[:APPLIES_TO]->() } AS nScopes,
+  COUNT { (l)-[:APPLIES_TO]->(:Tool) } AS nTools,
+  COUNT { (:Correction)-[:REPEATS]->(l) } AS repeats,
+  COUNT { (l)-[:SUPERSEDES*1..]->(:Lesson) } AS replaced,
+  [(l)-[:CONTRADICTS]-(o:Lesson) WHERE o.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(o) } | o.id] AS conflicts,
+  [(l)-[:APPLIES_TO]->(x) | toLower(labels(x)[0]) + ':' + x.name] AS scopes
+WHERE (hereProject OR NOT otherProject)
+  AND (nTools = 0 OR size(tools) > 0 OR hereProject)
+RETURN l.id AS id, l.text AS text, hereProject, tools, tasks, nScopes,
+       repeats, replaced, conflicts, scopes
+ORDER BY hereProject DESC, size(tools) DESC, repeats DESC, id`;
+
+function buildScopedExportPack(project, fmt = "claude", strictConflictFree = true) {
+  const t0 = performance.now();
+  const projTools = run("MATCH (:Project {name: $p})-[:USES]->(t:Tool) RETURN t.name AS name ORDER BY name", { p: project }).map(r => r.name);
+  const rows = run(SCOPED_EXPORT_CYPHER, { project });
+  const audit = run(`RETURN COUNT { (l:Lesson) WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+    AND EXISTS { (l)-[:APPLIES_TO]->(p:Project) WHERE p.name <> $project }
+    AND NOT EXISTS { (l)-[:APPLIES_TO]->(:Project {name: $project}) } } AS otherProjectExcluded,
+    COUNT { (l:Lesson) WHERE EXISTS { (:Lesson)-[:SUPERSEDES]->(l) } } AS supersededExcluded,
+    COUNT { (l:Lesson) WHERE l.status <> 'active' } AS retiredExcluded`, { project })[0];
+  const ms = performance.now() - t0;
+
+  const activeRows = rows.filter(r => !(strictConflictFree && r.conflicts.length));
+  const quarantined = rows.filter(r => strictConflictFree && r.conflicts.length);
+
+  const projRules = activeRows.filter(r => r.hereProject);
+  const toolRules = activeRows.filter(r => !r.hereProject && r.tools.length > 0);
+  const taskRules = activeRows.filter(r => !r.hereProject && r.tools.length === 0 && r.tasks.length > 0);
+  const globalRules = activeRows.filter(r => r.nScopes === 0);
+
+  const provComment = r => {
+    const parts = [`id=${r.id}`];
+    if (r.hereProject) parts.push(`path=(${r.id}:Lesson)-[:APPLIES_TO]->(${project}:Project)`);
+    else if (r.tools.length) parts.push(`path=(${project}:Project)-[:USES]->(${r.tools.join(",")}:Tool)<-[:APPLIES_TO]-(${r.id}:Lesson)`);
+    else if (r.tasks.length) parts.push(`path=(${r.id}:Lesson)-[:APPLIES_TO]->(${r.tasks.join(",")}:Task)`);
+    else parts.push("scope=global");
+    if (r.repeats) parts.push(`told=${r.repeats + 1}x`);
+    if (r.replaced) parts.push(`replaces=${r.replaced}`);
+    if (r.conflicts.length) parts.push(`conflicts=${r.conflicts.join(",")}`);
+    return `<!-- toldonce: ${parts.join(" | ")} -->`;
+  };
+
+  const renderSection = (title, items) => {
+    if (!items.length) return [];
+    const out = [`## ${title}`, ""];
+    for (const r of items) {
+      let suffix = r.repeats ? ` *(told ${r.repeats + 1}x)*` : "";
+      if (r.tasks.length && !title.startsWith("Task")) suffix += ` \`[task:${r.tasks.join(",")}]\``;
+      if (r.conflicts.length && !strictConflictFree) suffix += ` **[CONFLICTS with ${r.conflicts.join(", ")}: ask before choosing]**`;
+      out.push(`- ${r.text}${suffix}`);
+      out.push(`  ${provComment(r)}`);
+    }
+    out.push("");
+    return out;
+  };
+
+  const lines = [];
+  let displayPath, downloadName;
+  if (fmt === "claude") {
+    displayPath = `.claude/rules/toldonce-${project}.md`;
+    downloadName = `toldonce-${project}.md`;
+    lines.push(
+      "---",
+      `description: ToldOnce scoped Relate graph rules for ${project} (conflict-free, zero cross-project leaks)`,
+      `project: ${project}`,
+      `tools: [${projTools.join(", ")}]`,
+      "generated_by: toldonce (Relate by Neo4j WASM)",
+      "---",
+      "",
+      `# ToldOnce Scoped Rules: \`${project}\``,
+      "",
+      `<!-- toldonce-audit: project=${project} | active=${activeRows.length} | quarantined_conflicts=${quarantined.length} | other_projects_excluded=${audit.otherProjectExcluded} | superseded_excluded=${audit.supersededExcluded} -->`,
+      ""
+    );
+  } else {
+    displayPath = `AGENTS.md (scoped: ${project})`;
+    downloadName = `AGENTS-${project}.md`;
+    lines.push(
+      `# AGENTS.md (Scoped for \`${project}\`)`,
+      "",
+      `> Generated live from Relate WASM graph by ToldOnce. Zero cross-project leaks (\`${audit.otherProjectExcluded}\` other-project rules excluded), zero stale rules (\`${audit.supersededExcluded}\` superseded archived), \`${quarantined.length}\` conflicting rules quarantined.`,
+      `> Fingerprinted tools via \`(:Project)-[:USES]->(:Tool)\`: ${projTools.map(t => `\`${t}\``).join(", ") || "(none)"}.`,
+      "",
+      `<!-- toldonce-audit: project=${project} | active=${activeRows.length} | quarantined_conflicts=${quarantined.length} | other_projects_excluded=${audit.otherProjectExcluded} | superseded_excluded=${audit.supersededExcluded} -->`,
+      ""
+    );
+  }
+
+  lines.push(...renderSection(`Project Rules (\`${project}\`)`, projRules));
+  lines.push(...renderSection("Inherited Tool Rules (via `-[:USES]->`)", toolRules));
+  lines.push(...renderSection("Task-Triggered Rules", taskRules));
+  lines.push(...renderSection("Global Engineering Rules", globalRules));
+
+  if (quarantined.length) {
+    lines.push(
+      "## Open Conflicts (Quarantined - Ask Developer Before Applying)",
+      "",
+      "<!-- toldonce-conflict-guard: omitted from active directives to preserve a conflict-free instruction pack -->",
+      ""
+    );
+    for (const r of quarantined) {
+      lines.push(`- [ ] \`${r.id}\` (conflicts with \`${r.conflicts.join(", ")}\`): ${r.text}`);
+      lines.push(`  ${provComment(r)}`);
+    }
+    lines.push("");
+  }
+
+  return {
+    project,
+    fmt,
+    displayPath,
+    downloadName,
+    ms,
+    projTools,
+    activeCount: activeRows.length,
+    quarantinedCount: quarantined.length,
+    otherProjectExcluded: audit.otherProjectExcluded,
+    supersededExcluded: audit.supersededExcluded,
+    content: lines.join("\n").trimEnd() + "\n"
+  };
+}
+
+function renderScopedExport() {
+  const projSel = $("#exportProj");
+  if (!projSel || !projSel.value) return;
+  const strict = $("#exportStrictCheck").checked;
+  const pack = buildScopedExportPack(projSel.value, exportFmt, strict);
+  lastExportPack = pack;
+
+  $("#exportLatency").textContent = `${pack.ms.toFixed(2)} ms · WASM live`;
+  $("#exportPathBadge").textContent = pack.displayPath;
+  $("#exportCountBadge").textContent = `${pack.activeCount} active · ${pack.quarantinedCount} quarantined`;
+  $("#exportPreview").textContent = pack.content;
+
+  $("#exportAuditGrid").innerHTML = `
+    <div class="audit-tile sage">
+      <span class="audit-tile-val">0 leaks</span>
+      <span class="audit-tile-lbl">${pack.otherProjectExcluded} other-project rule${pack.otherProjectExcluded === 1 ? "" : "s"} blocked</span>
+    </div>
+    <div class="audit-tile sage">
+      <span class="audit-tile-val">${pack.supersededExcluded} archived</span>
+      <span class="audit-tile-lbl">Superseded rules excluded</span>
+    </div>
+    <div class="audit-tile ${pack.quarantinedCount ? "amber" : "sage"}">
+      <span class="audit-tile-val">${pack.quarantinedCount ? `${pack.quarantinedCount} quarantined` : "0 conflicts"}</span>
+      <span class="audit-tile-lbl">${pack.quarantinedCount ? "Isolated from active rules" : "100% conflict-free pack"}</span>
+    </div>
+    <div class="audit-tile">
+      <span class="audit-tile-val">${pack.projTools.length} tools</span>
+      <span class="audit-tile-lbl">Inherited via (:Project)-[:USES]</span>
+    </div>
+  `;
 }
 
 // --- Feature A: Live CLAUDE.md / AGENTS.md -> Relate Graph Exploder ---
@@ -2798,6 +3348,7 @@ function explodeMarkdownToGraph(cleanBlank = false) {
 
   refreshSelectors();
   renderRecall(false);
+  renderScopedExport();
   runLiveBenchmark();
 }
 
@@ -2998,6 +3549,9 @@ async function main() {
 
   $("#loadCypherBtn").onclick = () => {
     const p = $("#proj").value, prompt = $("#prompt").value.toLowerCase().replace(/'/g, "\\'");
+    activeCyPreset = null;
+    document.querySelectorAll("[data-cy]").forEach(b => b.classList.remove("active"));
+    $("#cyDesc").innerHTML = `Custom live query loaded from <code>recall.cypher</code> bound for project <code>${esc(p)}</code>.`;
     $("#cy").value = RECALL
       .replace(/\$project/g, `'${p.replace(/'/g, "\\'")}'`)
       .replace(/\$tools/g, "[]")
@@ -3047,6 +3601,7 @@ async function main() {
       : `<div class="note new"><strong>New :Lesson node created in Relate!</strong> ID <code>${esc(r.lesson.id)}</code> attached to <code>${esc(scopeLabel)}</code>${r.supersedes ? ` and <code>-[:SUPERSEDES]-&gt;(${esc(r.supersedes)})</code>` : ""}. <button type="button" class="pill-btn soft sm" id="queryNewBtn" style="margin-left:8px">Query This Rule Now -&gt;</button></div>`;
 
     renderRecall(true);
+    renderScopedExport();
     const node = graphNodes.find(n => n.label === "Lesson" && n.id === r.lesson.id);
     if (node) {
       inspectNode(node.k);
@@ -3067,13 +3622,70 @@ async function main() {
     }
   };
 
-  $("#cyBtn").onclick = runCypherConsole;
-  document.querySelectorAll("[data-cy]").forEach(btn => {
+  $("#cyBtn").onclick = () => {
+    if (!activeCyPreset || ($("#cy").value.trim() !== (CYPHER_PRESETS[activeCyPreset]?.query || "").trim())) {
+      activeCyPreset = null;
+      document.querySelectorAll("[data-cy]").forEach(b => b.classList.remove("active"));
+      $("#cyDesc").innerHTML = `Custom user Cypher statement executed directly against in-browser <code>@relate/relate-wasm</code>.`;
+    }
+    runCypherConsole();
+  };
+  $("#cy").addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      $("#cyBtn").click();
+    }
+  });
+  $("#cyViewSeg").querySelectorAll("button").forEach(btn => {
     btn.addEventListener("click", () => {
-      $("#cy").value = CYPHER_PRESETS[btn.dataset.cy];
-      runCypherConsole();
+      cyViewMode = btn.dataset.view;
+      $("#cyViewSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+      $("#cyTableWrap").style.display = cyViewMode === "table" ? "block" : "none";
+      $("#cyOut").style.display = cyViewMode === "json" ? "block" : "none";
     });
   });
+  $("#cyCopyJsonBtn").onclick = async () => {
+    const txt = JSON.stringify(lastCyRows, null, 2);
+    try { await navigator.clipboard.writeText(txt); } catch {}
+    const btn = $("#cyCopyJsonBtn");
+    const prev = btn.textContent;
+    btn.textContent = "Copied JSON!";
+    setTimeout(() => { btn.textContent = prev; }, 1400);
+  };
+  document.querySelectorAll("[data-cy]").forEach(btn => {
+    btn.addEventListener("click", () => selectCypherPreset(btn.dataset.cy));
+  });
+
+  $("#exportProj").addEventListener("change", renderScopedExport);
+  $("#exportStrictCheck").addEventListener("change", renderScopedExport);
+  $("#exportRefreshBtn").onclick = renderScopedExport;
+  $("#exportFmtSeg").querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      exportFmt = btn.dataset.fmt;
+      $("#exportFmtSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+      renderScopedExport();
+    });
+  });
+  $("#exportCopyBtn").onclick = async () => {
+    if (!lastExportPack) return;
+    try { await navigator.clipboard.writeText(lastExportPack.content); } catch {}
+    const btn = $("#exportCopyBtn");
+    const prev = btn.textContent;
+    btn.textContent = "Copied Pack!";
+    setTimeout(() => { btn.textContent = prev; }, 1500);
+  };
+  $("#exportDownloadBtn").onclick = () => {
+    if (!lastExportPack) return;
+    const blob = new Blob([lastExportPack.content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = lastExportPack.downloadName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   $("#resetBtn").onclick = () => {
     loadFreshDb();

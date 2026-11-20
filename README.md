@@ -16,9 +16,9 @@ Open **https://toldonce.vercel.app/** — zero installs, zero backend, running r
 
 1. **Click any of the 5 Judge Scenario Presets** (*Tool Inheritance*, *Project Isolation / Zero Leak*, *Superseding History*, *Conflicting Rules Guard*, *Repeat Correction Stats*) to execute live Cypher and watch the **Interactive Relate Graph Visualizer** highlight exact traversal paths (`:USES`, `:APPLIES_TO`, `:SUPERSEDES`, `:CONTRADICTS`, `:REPEATS`).
 2. **Hover or click any recalled lesson or graph node** to isolate its justification path and open the **Node Inspector** (properties, edges, supersede chain, and correction history).
-3. **Inspect the Live `recall.cypher` Trace Drawer** to see real in-browser execution latency (ms), bound parameters, per-hit graph justification paths, and the exact shared `recall.cypher` statement.
-4. **Paste your `CLAUDE.md` / `AGENTS.md` and click "Explode Into Relate Graph"** to parse markdown bullets live into `:Project`, `:Tool`, `:Task`, and `:Lesson` nodes in milliseconds, auto-merging duplicates (`:REPEATS`) and flagging contradictions (`:CONTRADICTS`).
-5. **Check the Live 8-Query Benchmark Panel** comparing a flat dump-all `CLAUDE.md` against ToldOnce's Relate graph live inside WASM (`100% Scoped Precision · 0% Cross-Project Leaks`).
+3. **Run the Interactive Live Cypher Console** directly against `@relate/relate-wasm` with 5 clickable expert Cypher queries (*`SUPERSEDES*1..` Audit Chain*, *`CONTRADICTS` Conflict Finder*, *Top Repeated Corrections*, *Cross-Repo Tool Matrix*, *Recall Provenance Audit*) or write custom Cypher with live **Table + JSON output**, real `ms` latency, and click-to-focus graph integration.
+4. **Use 1-Click Export to `.claude/rules/` & `AGENTS.md` (Scoped)** to query the live Relate WASM graph for any project (`storefront`, `trading-bot`, `agency-site`) and generate a clean, conflict-free, zero-leak instruction pack with Cypher path provenance comments and conflict quarantine.
+5. **Inspect the Live `recall.cypher` Trace Drawer**, paste any `CLAUDE.md` / `AGENTS.md` into **Explode Into Relate Graph**, and run the **Live 8-Query WASM Benchmark** (`8/8 PASS · 100% Scoped Precision · 0% Cross-Project Leaks`).
 
 ## The problem
 
@@ -68,7 +68,8 @@ Requires Python 3.10+. Relate comes in as a pip dependency (`relate-db`), so the
 git clone https://github.com/wenizmohamed/toldonce && cd toldonce
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"
-pytest -q                      # 17 tests
+pytest -q                              # 29 Python tests (relate-db)
+node --test tests/test_web_engine.mjs  # 10 JS tests (@relate/relate-wasm)
 ```
 
 ### Try it on the demo store
@@ -82,6 +83,8 @@ toldonce recall "commit the new checkout page copy" --project storefront
 toldonce recall "redesign the hero" --project agency-site      # shows the open conflict
 toldonce show <lesson-id>                                      # supersede chain + every correction
 toldonce stats                                                 # what you've had to say twice
+toldonce export-rules --project storefront --format claude     # conflict-free .claude/rules/ pack with provenance
+toldonce export-rules --project trading-bot --format agents    # scoped AGENTS.md with 0 cross-project leaks
 ```
 
 ### Teach it
@@ -103,7 +106,7 @@ The store defaults to `~/.toldonce/lessons.rl`, one graph shared across all your
 - The `UserPromptSubmit` hook (`toldonce hook --capture`) fingerprints the repo (git, node, pnpm, python, docker, vercel…), records `(:Project)-[:USES]->(:Tool)`, and injects a `<toldonce>` block with the lessons that apply before the model sees your prompt.
 - With `--capture`, prompts that read as corrections ("no, …", "don't …", "I told you …") are learned automatically, scoped to the current project.
 
-**Any MCP host:** `toldonce-mcp` is a stdio MCP server with `recall`, `learn`, `supersede` and `history` tools. It is dependency-free and runs on the same store.
+**Any MCP host:** `toldonce-mcp` is a stdio MCP server with `recall`, `learn`, `supersede`, `history`, and `export_rules` tools. It is dependency-free and runs on the same store.
 
 **Anything else:** `toldonce recall --cwd . --context "<prompt>"` prints the block to paste into a system prompt, and `--json` prints structured hits.
 

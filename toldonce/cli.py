@@ -98,6 +98,12 @@ def main(argv=None):
     s = sub.add_parser("export", help="dump the graph as a replayable Cypher script")
     s.add_argument("--recalls", action="store_true", help="include Recall log nodes")
 
+    s = sub.add_parser("export-rules", help="export a scoped, conflict-free .claude/rules/ or AGENTS.md pack")
+    s.add_argument("--project", required=True, help="target project name")
+    s.add_argument("--format", dest="fmt", choices=["claude", "agents"], default="claude", help="pack format")
+    s.add_argument("--include-conflicts", action="store_true", help="keep conflicted rules inline instead of quarantining")
+    s.add_argument("--json", action="store_true", help="print JSON metadata + content")
+
     s = sub.add_parser("hook", help="Claude Code UserPromptSubmit hook (JSON on stdin)")
     s.add_argument("--capture", action="store_true", help="also learn from prompts that read as corrections")
 
@@ -160,6 +166,12 @@ def _run(a, g: LessonGraph):
     elif a.cmd == "export":
         from .store import export_cypher
         print(export_cypher(g, a.recalls), end="")
+    elif a.cmd == "export-rules":
+        pack = g.export_scoped_pack(a.project, fmt=a.fmt, exclude_conflicts=not a.include_conflicts)
+        if a.json:
+            print(json.dumps(pack, indent=2))
+        else:
+            print(pack["content"], end="")
     elif a.cmd == "hook":
         return _hook(a, g)
     return 0

@@ -249,6 +249,145 @@ class LessonGraph:
                RETURN l.id AS id, l.text AS text, count(c) + 1 AS told ORDER BY told DESC, id LIMIT 5""")
         return r
 
+    def export_scoped_pack(self, project: str, fmt: str = "claude", exclude_conflicts: bool = True) -> dict:
+        """Compile a conflict-free, zero-leak .claude/rules/ or AGENTS.md pack for one project."""
+        if fmt not in ("claude", "agents"):
+            raise ValueError(f"format must be 'claude' or 'agents', got {fmt!r}")
+        proj_tools = [
+            r["name"]
+            for r in self.q("MATCH (:Project {name: $p})-[:USES]->(t:Tool) RETURN t.name AS name ORDER BY name", p=project)
+        ]
+        rows = self.q(
+            """MATCH (l:Lesson)
+               WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+               WITH l,
+                 EXISTS { (l)-[:APPLIES_TO]->(:Project {name: $project}) } AS hereProject,
+                 EXISTS { (l)-[:APPLIES_TO]->(p:Project) WHERE p.name <> $project } AS otherProject,
+                 [(l)-[:APPLIES_TO]->(t:Tool) WHERE EXISTS { (:Project {name: $project})-[:USES]->(t) } | t.name] AS tools,
+                 [(l)-[:APPLIES_TO]->(k:Task) | k.name] AS tasks,
+                 COUNT { (l)-[:APPLIES_TO]->() } AS nScopes,
+                 COUNT { (l)-[:APPLIES_TO]->(:Tool) } AS nTools,
+                 COUNT { (:Correction)-[:REPEATS]->(l) } AS repeats,
+                 COUNT { (l)-[:SUPERSEDES*1..]->(:Lesson) } AS replaced,
+                 [(l)-[:CONTRADICTS]-(o:Lesson) WHERE o.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(o) } | o.id] AS conflicts,
+                 [(l)-[:APPLIES_TO]->(x) | toLower(labels(x)[0]) + ':' + x.name] AS scopes
+               WHERE (hereProject OR NOT otherProject)
+                 AND (nTools = 0 OR size(tools) > 0 OR hereProject)
+               RETURN l.id AS id, l.text AS text, hereProject, tools, tasks, nScopes,
+                      repeats, replaced, conflicts, scopes
+               ORDER BY hereProject DESC, size(tools) DESC, repeats DESC, id""",
+            project=project,
+        )
+        audit = self.q(
+            """RETURN COUNT { (l:Lesson) WHERE l.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+                               AND EXISTS { (l)-[:APPLIES_TO]->(p:Project) WHERE p.name <> $project }
+                               AND NOT EXISTS { (l)-[:APPLIES_TO]->(:Project {name: $project}) } } AS other_project_excluded,
+                      COUNT { (l:Lesson) WHERE EXISTS { (:Lesson)-[:SUPERSEDES]->(l) } } AS superseded_excluded,
+                      COUNT { (l:Lesson) WHERE l.status <> 'active' } AS retired_excluded""",
+            project=project,
+        )[0]
+
+        active_rows = [r for r in rows if not (exclude_conflicts and r["conflicts"])]
+        quarantined = [r for r in rows if exclude_conflicts and r["conflicts"]]
+
+        proj_rules = [r for r in active_rows if r["hereProject"]]
+        tool_rules = [r for r in active_rows if not r["hereProject"] and r["tools"]]
+        task_rules = [r for r in active_rows if not r["hereProject"] and not r["tools"] and r["tasks"]]
+        global_rules = [r for r in active_rows if r["nScopes"] == 0]
+
+        def _prov(r):
+            parts = [f"id={r['id']}"]
+            if r["hereProject"]:
+                parts.append(f"path=({r['id']}:Lesson)-[:APPLIES_TO]->({project}:Project)")
+            elif r["tools"]:
+                parts.append(f"path=({project}:Project)-[:USES]->({','.join(r['tools'])}:Tool)<-[:APPLIES_TO]-({r['id']}:Lesson)")
+            elif r["tasks"]:
+                parts.append(f"path=({r['id']}:Lesson)-[:APPLIES_TO]->({','.join(r['tasks'])}:Task)")
+            else:
+                parts.append("scope=global")
+            if r["repeats"]:
+                parts.append(f"told={r['repeats'] + 1}x")
+            if r["replaced"]:
+                parts.append(f"replaces={r['replaced']}")
+            if r["conflicts"]:
+                parts.append(f"conflicts={','.join(r['conflicts'])}")
+            return f"<!-- toldonce: {' | '.join(parts)} -->"
+
+        def _render_section(title, items):
+            if not items:
+                return []
+            out = [f"## {title}", ""]
+            for r in items:
+                suffix = f" *(told {r['repeats'] + 1}x)*" if r["repeats"] else ""
+                if r["tasks"] and not title.startswith("Task"):
+                    suffix += f" `[task:{','.join(r['tasks'])}]`"
+                if r["conflicts"] and not exclude_conflicts:
+                    suffix += f" **[CONFLICTS with {', '.join(r['conflicts'])}: ask before choosing]**"
+                out.append(f"- {r['text']}{suffix}")
+                out.append(f"  {_prov(r)}")
+            out.append("")
+            return out
+
+        lines: list[str] = []
+        if fmt == "claude":
+            filename = f".claude/rules/toldonce-{project}.md"
+            lines.extend([
+                "---",
+                f"description: ToldOnce scoped Relate graph rules for {project} (conflict-free, zero cross-project leaks)",
+                f"project: {project}",
+                f"tools: [{', '.join(proj_tools)}]",
+                f"generated_by: toldonce (Relate by Neo4j)",
+                "---",
+                "",
+                f"# ToldOnce Scoped Rules: `{project}`",
+                "",
+                f"<!-- toldonce-audit: project={project} | active={len(active_rows)} | quarantined_conflicts={len(quarantined)} | other_projects_excluded={audit['other_project_excluded']} | superseded_excluded={audit['superseded_excluded']} -->",
+                "",
+            ])
+        else:
+            filename = "AGENTS.md"
+            lines.extend([
+                f"# AGENTS.md (Scoped for `{project}`)",
+                "",
+                f"> Generated live from Relate graph by ToldOnce. Zero cross-project leaks (`{audit['other_project_excluded']}` other-project rules excluded), zero stale rules (`{audit['superseded_excluded']}` superseded archived), `{len(quarantined)}` conflicting rules quarantined.",
+                f"> Fingerprinted tools via `(:Project)-[:USES]->(:Tool)`: {', '.join(f'`{t}`' for t in proj_tools) or '(none)'}.",
+                "",
+                f"<!-- toldonce-audit: project={project} | active={len(active_rows)} | quarantined_conflicts={len(quarantined)} | other_projects_excluded={audit['other_project_excluded']} | superseded_excluded={audit['superseded_excluded']} -->",
+                "",
+            ])
+
+        lines.extend(_render_section(f"Project Rules (`{project}`)", proj_rules))
+        lines.extend(_render_section("Inherited Tool Rules (via `-[:USES]->`)", tool_rules))
+        lines.extend(_render_section("Task-Triggered Rules", task_rules))
+        lines.extend(_render_section("Global Engineering Rules", global_rules))
+
+        if quarantined:
+            lines.extend([
+                "## Open Conflicts (Quarantined - Ask Developer Before Applying)",
+                "",
+                "<!-- toldonce-conflict-guard: omitted from active directives to preserve a conflict-free instruction pack -->",
+                "",
+            ])
+            for r in quarantined:
+                lines.append(f"- [ ] `{r['id']}` (conflicts with `{', '.join(r['conflicts'])}`): {r['text']}")
+                lines.append(f"  {_prov(r)}")
+            lines.append("")
+
+        return {
+            "project": project,
+            "format": fmt,
+            "filename": filename,
+            "tools": proj_tools,
+            "active_count": len(active_rows),
+            "quarantined_count": len(quarantined),
+            "other_project_excluded": audit["other_project_excluded"],
+            "superseded_excluded": audit["superseded_excluded"],
+            "retired_excluded": audit["retired_excluded"],
+            "active_ids": [r["id"] for r in active_rows],
+            "quarantined_ids": [r["id"] for r in quarantined],
+            "content": "\n".join(lines).rstrip() + "\n",
+        }
+
 
 def _lit(v) -> str:
     if v is None:

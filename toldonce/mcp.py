@@ -27,6 +27,10 @@ TOOLS = [
                      "properties": {"new": {"type": "string"}, "old": {"type": "string"}}}},
     {"name": "history", "description": "A lesson's supersede chain and the corrections behind it.",
      "inputSchema": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}},
+    {"name": "export_rules", "description": "Generate a conflict-free, zero-leak .claude/rules/ or AGENTS.md instruction pack with provenance comments for one project.",
+     "inputSchema": {"type": "object", "required": ["project"], "properties": {
+         "project": {"type": "string"}, "format": {"type": "string", "enum": ["claude", "agents"]},
+         "exclude_conflicts": {"type": "boolean"}}}},
 ]
 
 
@@ -41,6 +45,12 @@ def call(g: LessonGraph, name: str, args: dict):
         g.supersede(args["new"], args["old"]); return {"ok": True}
     if name == "history":
         chain, said = g.history(args["id"]); return {"chain": chain, "corrections": said}
+    if name == "export_rules":
+        return g.export_scoped_pack(
+            args["project"],
+            fmt=args.get("format", "claude"),
+            exclude_conflicts=args.get("exclude_conflicts", True),
+        )
     raise ValueError(f"unknown tool {name}")
 
 
