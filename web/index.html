@@ -1702,13 +1702,13 @@ footer code {
           <span class="live-dot" aria-hidden="true"></span>
           <strong>Relate by Neo4j</strong>
           <span>·</span>
-          <span>Live Browser WASM Memory Studio</span>
+          <span>Live In-Browser AI Memory Graph</span>
         </div>
         <h1 class="hero-title">Tell your AI <em>once</em>. Never repeat yourself again.</h1>
-        <p class="hero-sub">Every correction becomes a connected <code>:Lesson</code> node linked to <code>:Project</code>, <code>:Tool</code>, and <code>:Task</code> scopes. One Cypher statement traverses inherited rules, archives superseded history, flags open conflicts, and counts repeats locally in <code>@relate/relate-wasm</code>.</p>
+        <p class="hero-sub">Every correction you give becomes a living rule tied to your project, tools, and tasks. ToldOnce automatically recalls the right rules, retires outdated ones, catches contradictions, and tracks repeated mistakes right in your browser (powered by <code>Relate by Neo4j</code>).</p>
       </div>
       <div class="hero-status-rail">
-        <div class="engine-status" id="status">Loading Relate WebAssembly engine...</div>
+        <div class="engine-status" id="status">Loading Relate Memory Engine...</div>
       </div>
     </div>
 
@@ -1722,8 +1722,8 @@ footer code {
   <!-- 1-Click Judge Scenarios Capsule Bar -->
   <div class="scenario-card" id="workspaceSection">
     <div class="scenario-top">
-      <span class="scenario-kicker">1-Click Judge Scenarios · Live Relate Graph Traversals</span>
-      <span class="scenario-hint">Select any scenario to execute real Cypher and illuminate exact traversal paths</span>
+      <span class="scenario-kicker">1-Click Interactive Scenarios · Live Graph Memory</span>
+      <span class="scenario-hint">Pick any scenario to run a live graph query and see how ToldOnce recalls the exact right rules</span>
     </div>
     <div class="presets-row" id="presetsRow"></div>
     <div class="scenario-callout" id="scenarioCallout"></div>
@@ -1738,7 +1738,7 @@ footer code {
           <h2 class="card-title">1. Recall <em>Connected</em> Lessons</h2>
           <span class="metric-pill sage" id="latencyBadge">0.00 ms</span>
         </div>
-        <p class="card-sub">Walks <code>(:Project)-[:USES]-&gt;(:Tool)&lt;-[:APPLIES_TO]-(:Lesson)</code>, task triggers, supersede chains, conflicts, and Relate Full-Text search. Hover or click any hit to isolate its path inside the graph.</p>
+        <p class="card-sub">Automatically pulls rules from your active project, its tools, and your current task, skipping retired rules and flagging conflicts. Hover or click any rule to highlight its path in the graph.</p>
 
         <div class="field-row">
           <div>
@@ -1746,7 +1746,7 @@ footer code {
             <select id="proj"></select>
           </div>
           <div>
-            <label>Detected Repo Tools (via :USES)</label>
+            <label>Tools Used by This Project</label>
             <div id="projTools" class="tools-well"></div>
           </div>
         </div>
@@ -1788,10 +1788,10 @@ footer code {
 
       <section class="card" id="learnSection">
         <div class="card-head">
-          <h2 class="card-title">2. Learn New <em>Correction</em></h2>
-          <span class="metric-pill">Live WASM Write</span>
+          <h2 class="card-title">2. Teach a New <em>Rule</em></h2>
+          <span class="metric-pill">Saved Live Locally</span>
         </div>
-        <p class="card-sub">Record your own rule below. ToldOnce writes a live <code>:Lesson</code> node into Relate, or detects an existing match and attaches a <code>[:REPEATS]</code> edge with zero duplication.</p>
+        <p class="card-sub">Record a new rule below. ToldOnce saves it directly to the live graph, or recognizes if you already taught it and increments the repeat count instead of creating a duplicate.</p>
 
         <div class="quick-fills">
           <button type="button" class="pill-mini" id="qfNew">+ Brand-New Rule</button>
@@ -1840,7 +1840,7 @@ footer code {
             <button type="button" data-mode="active">Active Only</button>
           </div>
         </div>
-        <p class="card-sub">Live SVG projection of the in-memory Relate store. Drag any node, zoom or pan, and click a node to inspect its <code>:SUPERSEDES</code> lineage and correction trail.</p>
+        <p class="card-sub">Interactive view of your live AI memory graph. Drag any node, zoom or pan, and click a rule to see its history and why it fires.</p>
 
         <!-- ONE High-Contrast Deep Espresso-Obsidian Interactive Graph Canvas (#161412, 24px bezel) -->
         <div class="graph-bezel">
@@ -2046,10 +2046,10 @@ const PRESETS = [
   {
     id: "inheritance",
     label: "Tool Inheritance",
-    tag: "2-HOP :USES",
+    tag: "SHARED TOOLS",
     project: "storefront",
     prompt: "commit the new checkout page copy",
-    callout: "Proves 2-hop inheritance: (storefront:Project)-[:USES]->(git:Tool)<-[:APPLIES_TO]-(:Lesson) fires git rules automatically alongside storefront's pnpm rule and task:copy / task:commit lessons.",
+    callout: "Shows automatic tool inheritance: because storefront uses Git, all your Git rules fire automatically alongside storefront's pnpm and copywriting rules.",
     cypherKey: "matrix"
   },
   {
@@ -2058,34 +2058,34 @@ const PRESETS = [
     tag: "ZERO LEAK",
     project: "trading-bot",
     prompt: "install deps and update strategy params",
-    callout: "Proves strict project boundary: storefront's 'Use pnpm, never npm' is EXCLUDED (0 leaks), while trading-bot's strategy guard and inherited python/git tool rules fire cleanly.",
+    callout: "Shows strict project separation: storefront's 'Use pnpm, never npm' stays completely out of trading-bot (zero cross-project leaks), while trading-bot's own rules fire cleanly.",
     cypherKey: "matrix"
   },
   {
     id: "supersedes",
-    label: "Superseding History",
-    tag: ":SUPERSEDES",
+    label: "Replacing Old Rules",
+    tag: "VERSIONED",
     project: "storefront",
     prompt: "deploy the latest build to production on vercel",
-    callout: "Proves non-destructive rule evolution: old 'Deploy with vercel --prod' is dimmed and excluded by NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }, while the GitHub Actions CI rule fires with 'replaces 1 older'.",
+    callout: "Shows clean rule updates: your older 'Deploy with vercel --prod' rule is automatically retired, while the newer GitHub Actions deploy rule takes over without losing audit history.",
     cypherKey: "supersedes"
   },
   {
     id: "conflicts",
     label: "Conflicting Rules Guard",
-    tag: ":CONTRADICTS",
+    tag: "CONFLICT ALERT",
     project: "agency-site",
     prompt: "redesign the hero section cards",
-    callout: "Proves conflict transparency: both hero design rules surface linked by an amber :CONTRADICTS edge, instructing the agent to ask the developer instead of silently guessing.",
+    callout: "Shows conflict safety: when two saved rules contradict each other, ToldOnce flags both and tells your AI to ask you instead of silently guessing.",
     cypherKey: "conflicts"
   },
   {
     id: "repeats",
-    label: "Repeat Correction Stats",
-    tag: ":REPEATS",
+    label: "Repeated Mistakes",
+    tag: "REPEAT COUNT",
     project: "storefront",
     prompt: "run tests before commit and fix client copy",
-    callout: "Proves repeat accountability: duplicate corrections become (:Correction)-[:REPEATS]->(:Lesson) edges instead of duplicate rules, boosting priority and powering the repeat leaderboard below.",
+    callout: "Shows repeat tracking: telling your AI the same thing twice boosts that rule's priority instead of duplicating it, and tracks which mistakes happen most often.",
     cypherKey: "repeats"
   }
 ];
