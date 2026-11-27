@@ -25,11 +25,20 @@ TOOLS = [
     {"name": "supersede", "description": "Mark lesson `new` as replacing lesson `old`.",
      "inputSchema": {"type": "object", "required": ["new", "old"],
                      "properties": {"new": {"type": "string"}, "old": {"type": "string"}}}},
+    {"name": "resolve_conflict", "description": "Resolve an active :CONTRADICTS conflict by keeping `winner` and superseding `loser`.",
+     "inputSchema": {"type": "object", "required": ["winner", "loser"],
+                     "properties": {"winner": {"type": "string"}, "loser": {"type": "string"}, "note": {"type": "string"}}}},
     {"name": "history", "description": "A lesson's supersede chain and the corrections behind it.",
      "inputSchema": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}},
-    {"name": "export_rules", "description": "Generate a conflict-free, zero-leak .claude/rules/ or AGENTS.md instruction pack with provenance comments for one project.",
+    {"name": "import_markdown", "description": "Explode a flat CLAUDE.md, AGENTS.md, or .cursorrules markdown document into scoped Relate graph nodes, merging repeats and flagging contradictions.",
+     "inputSchema": {"type": "object", "required": ["markdown"], "properties": {"markdown": {"type": "string"}}}},
+    {"name": "profile_recall", "description": "Execute Relate native PROFILE on recall.cypher, returning relate.plan/v1 operator tree and parse/plan/execute millisecond phase telemetry.",
+     "inputSchema": {"type": "object", "properties": {
+         "prompt": {"type": "string"}, "project": {"type": "string"},
+         "tools": {"type": "array", "items": {"type": "string"}}}}},
+    {"name": "export_rules", "description": "Generate a conflict-free, zero-leak .claude/rules/, AGENTS.md, or .cursor/rules/*.mdc instruction pack with provenance comments for one project.",
      "inputSchema": {"type": "object", "required": ["project"], "properties": {
-         "project": {"type": "string"}, "format": {"type": "string", "enum": ["claude", "agents"]},
+         "project": {"type": "string"}, "format": {"type": "string", "enum": ["claude", "agents", "cursor"]},
          "exclude_conflicts": {"type": "boolean"}}}},
 ]
 
@@ -43,8 +52,14 @@ def call(g: LessonGraph, name: str, args: dict):
         return g.learn(args["said"], args.get("lesson"), scopes, supersedes=args.get("supersedes"))
     if name == "supersede":
         g.supersede(args["new"], args["old"]); return {"ok": True}
+    if name == "resolve_conflict":
+        return g.resolve_conflict(args["winner"], args["loser"], note=args.get("note"))
     if name == "history":
         chain, said = g.history(args["id"]); return {"chain": chain, "corrections": said}
+    if name == "import_markdown":
+        return g.import_markdown(args["markdown"])
+    if name == "profile_recall":
+        return g.profile_recall(args.get("project"), args.get("tools") or [], args.get("prompt", ""))
     if name == "export_rules":
         return g.export_scoped_pack(
             args["project"],
@@ -66,7 +81,8 @@ def main(db: str = DEFAULT_DB):
         try:
             if method == "initialize":
                 result = {"protocolVersion": msg.get("params", {}).get("protocolVersion", "2025-03-26"),
-                          "capabilities": {"tools": {}}, "serverInfo": {"name": "toldonce", "version": "0.1.0"}}
+                          "capabilities": {"tools": {}}, "serverInfo": {"name": "toldonce", "version": "0.2.0"}}
+
             elif method == "tools/list":
                 result = {"tools": TOOLS}
             elif method == "tools/call":

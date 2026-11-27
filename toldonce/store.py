@@ -29,10 +29,26 @@ W_PROJECT, W_TOOL, W_TASK, W_GLOBAL, W_TEXT, W_REPEAT = 3.0, 2.0, 2.0, 0.5, 4.0,
 
 _WORD = re.compile(r"[a-z0-9][a-z0-9_.+]*")
 _STOP = set("a an the to of in on for and or is are be do don't dont not never always use with it this that i you we".split())
+_NEG_RE = re.compile(r"\b(never|no|not|don't|dont|avoid|stop|forbid|without)\b", re.I)
+
+KNOWN_TOOLS = (
+    "git", "pnpm", "npm", "node", "nextjs", "tailwind", "vercel", "python",
+    "docker", "rust", "go", "prisma", "pytest", "stripe", "typescript", "cursor",
+)
+KNOWN_TASKS = ("copy", "commit", "deploy", "review", "merge", "migration", "refactor")
+
+
+
+def _stem(w: str) -> str:
+    return w[:-1] if len(w) >= 5 and w.endswith("s") and not w.endswith("ss") else w
+
+
+def _raw_tokens(text: str) -> set[str]:
+    return {w for w in _WORD.findall(text.lower()) if w not in _STOP and len(w) > 1}
 
 
 def _tokens(text: str) -> set[str]:
-    return {w for w in _WORD.findall(text.lower()) if w not in _STOP and len(w) > 1}
+    return {_stem(w) for w in _raw_tokens(text)}
 
 
 def _similar(a: str, b: str) -> float:
@@ -42,7 +58,8 @@ def _similar(a: str, b: str) -> float:
 
 def _ft_query(text: str) -> str:
     # Lucene-ish OR query from the meaningful words; empty string disables full-text.
-    return " OR ".join(sorted(_tokens(text))[:24])
+    return " OR ".join(sorted(_raw_tokens(text))[:24])
+
 
 
 def _short_id() -> str:
@@ -109,15 +126,19 @@ class LessonGraph:
             ft=ft,
         )
         want = {(k, n) for k, n in scopes}
+        said_neg = bool(_NEG_RE.search(text))
         best, best_sim = None, threshold
         for r in rows:
             have = {tuple(x) for x in r["scopes"]}
             if want and have and not (want & have):
                 continue
+            if said_neg != bool(_NEG_RE.search(r["text"])):
+                continue
             sim = _similar(text, r["text"])
             if sim >= best_sim:
                 best, best_sim = r["id"], sim
         return best
+
 
     def learn(self, said: str, lesson: str | None = None, scopes: list[tuple[str, str]] = (),
               session: str | None = None, supersedes: str | None = None, detect_repeat: bool = True) -> dict:
@@ -156,6 +177,127 @@ class LessonGraph:
 
     def contradict(self, a: str, b: str):
         self.q("MATCH (a:Lesson {id: $a}), (b:Lesson {id: $b}) MERGE (a)-[:CONTRADICTS]->(b)", a=a, b=b)
+
+    def resolve_conflict(self, winner: str, loser: str, note: str | None = None) -> dict:
+        """Resolve an open conflict by keeping `winner` and superseding `loser`."""
+        if winner == loser:
+            raise ValueError("winner and loser must be distinct lesson IDs")
+        self.supersede(winner, loser)
+        if note and note.strip():
+            cid = _short_id()
+            self.q(
+                "CREATE (c:Correction {id: $id, said: $said, at: datetime(), session: 'conflict-resolution'}) "
+                "WITH c MATCH (w:Lesson {id: $w}) MERGE (c)-[:RESOLVED]->(w)",
+                id=cid, said=note.strip(), w=winner,
+            )
+        rem = self.q(
+            """RETURN COUNT {
+                 MATCH (a:Lesson)-[:CONTRADICTS]-(b:Lesson)
+                 WHERE a.id < b.id AND a.status = 'active' AND b.status = 'active'
+                   AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(a) }
+                   AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(b) }
+               } AS open_conflicts"""
+        )[0]["open_conflicts"]
+        return {"winner": winner, "superseded": loser, "open_conflicts": rem}
+
+    def profile_recall(self, project: str | None = None, tools: list[str] = (), prompt: str = "") -> dict:
+        """Run Relate native PROFILE on recall.cypher and return relate.plan/v1 + phase ms."""
+        cur = self.db.execute(
+            "PROFILE " + RECALL_CYPHER,
+            {"project": project or "", "tools": list(tools), "text": prompt.lower()},
+        )
+        rows = cur.fetchall()
+        summary = cur.consume()
+        return {
+            "project": project or "",
+            "candidate_rows": len(rows),
+            "elapsed_ms": round(summary.elapsed_ms, 4),
+            "parse_ms": round(summary.parse_ms, 4),
+            "plan_ms": round(summary.plan_ms, 4),
+            "execute_ms": round(summary.execute_ms, 4),
+            "query_type": summary.query_type,
+            "notifications": summary.notifications,
+            "plan": summary.plan,
+        }
+
+    def import_markdown(self, md_text: str, session: str = "import-md") -> dict:
+        """Explode a flat CLAUDE.md / AGENTS.md / .cursorrules file into Relate graph nodes."""
+        existing_projs = [r["n"] for r in self.q("MATCH (p:Project) RETURN p.name AS n")]
+        parsed = parse_markdown_rules(md_text, existing_projs)
+        created_lessons = 0
+        merged_repeats = 0
+        flagged_conflicts = 0
+        linked_scopes: set[str] = set()
+        items: list[dict] = []
+
+        for entry in parsed:
+            if entry["project_uses"]:
+                p_name, t_name = entry["project_uses"]
+                self.note_project(p_name, [t_name])
+                linked_scopes.add(f"project:{p_name}")
+                linked_scopes.add(f"tool:{t_name}")
+
+            scopes = entry["scopes"]
+            proj_scope = next((n for k, n in scopes if k == "project"), None)
+            if proj_scope:
+                tool_names = [n for k, n in scopes if k == "tool"]
+                if tool_names:
+                    self.note_project(proj_scope, tool_names)
+
+            res = self.learn(entry["text"], scopes=scopes, session=session)
+            lid = res["lesson"]
+            for k, n in scopes:
+                linked_scopes.add(f"{k}:{n}")
+
+            if res["repeat"]:
+                merged_repeats += 1
+                items.append({"status": "repeat", "id": lid, "text": entry["text"]})
+                continue
+
+            created_lessons += 1
+            rec_neg = bool(_NEG_RE.search(entry["text"]))
+            rec_toks = _tokens(entry["text"])
+            rec_scope_set = {f"{k}:{n}" for k, n in scopes}
+            conflict_with = None
+            active_pool = self.q(
+                """MATCH (l:Lesson)
+                   WHERE l.status = 'active' AND l.id <> $id AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(l) }
+                   RETURN l.id AS id, l.text AS text,
+                          [(l)-[:APPLIES_TO]->(x) | toLower(labels(x)[0]) + ':' + x.name] AS scopes""",
+                id=lid,
+            )
+            for other in active_pool:
+                if bool(_NEG_RE.search(other["text"])) == rec_neg:
+                    continue
+                other_scopes = set(other["scopes"])
+                if rec_scope_set and other_scopes and not (rec_scope_set & other_scopes):
+                    continue
+                ot = _tokens(other["text"])
+                shared = len(rec_toks & ot)
+                ratio = shared / max(1, min(len(rec_toks), len(ot)))
+                if shared >= 2 and ratio >= 0.35:
+                    self.contradict(lid, other["id"])
+                    conflict_with = other["id"]
+                    flagged_conflicts += 1
+                    break
+
+            items.append({
+                "status": "conflict" if conflict_with else "new",
+                "id": lid,
+                "text": entry["text"],
+                "conflict_with": conflict_with,
+                "scopes": [f"{k}:{n}" for k, n in scopes],
+            })
+
+        return {
+            "parsed_rules": len(parsed),
+            "created_lessons": created_lessons,
+            "merged_repeats": merged_repeats,
+            "flagged_conflicts": flagged_conflicts,
+            "linked_scopes": len(linked_scopes),
+            "items": items,
+        }
+
 
     def retire(self, lid: str):
         self.q("MATCH (l:Lesson {id: $l}) SET l.status = 'retired'", l=lid)
@@ -250,9 +392,10 @@ class LessonGraph:
         return r
 
     def export_scoped_pack(self, project: str, fmt: str = "claude", exclude_conflicts: bool = True) -> dict:
-        """Compile a conflict-free, zero-leak .claude/rules/ or AGENTS.md pack for one project."""
-        if fmt not in ("claude", "agents"):
-            raise ValueError(f"format must be 'claude' or 'agents', got {fmt!r}")
+        """Compile a conflict-free, zero-leak .claude/rules/, AGENTS.md, or .cursor/rules/*.mdc pack for one project."""
+        if fmt not in ("claude", "agents", "cursor"):
+            raise ValueError(f"format must be 'claude', 'agents', or 'cursor', got {fmt!r}")
+
         proj_tools = [
             r["name"]
             for r in self.q("MATCH (:Project {name: $p})-[:USES]->(t:Tool) RETURN t.name AS name ORDER BY name", p=project)
@@ -344,8 +487,23 @@ class LessonGraph:
                 f"<!-- toldonce-audit: project={project} | active={len(active_rows)} | quarantined_conflicts={len(quarantined)} | other_projects_excluded={audit['other_project_excluded']} | superseded_excluded={audit['superseded_excluded']} -->",
                 "",
             ])
+        elif fmt == "cursor":
+            filename = f".cursor/rules/toldonce-{project}.mdc"
+            lines.extend([
+                "---",
+                f"description: ToldOnce scoped Relate graph rules for {project} (conflict-free, zero cross-project leaks)",
+                'globs: ["**/*"]',
+                "alwaysApply: true",
+                "---",
+                "",
+                f"# ToldOnce Cursor MDC Rules: `{project}`",
+                "",
+                f"<!-- toldonce-audit: project={project} | format=cursor-mdc | active={len(active_rows)} | quarantined_conflicts={len(quarantined)} | other_projects_excluded={audit['other_project_excluded']} | superseded_excluded={audit['superseded_excluded']} -->",
+                "",
+            ])
         else:
             filename = "AGENTS.md"
+
             lines.extend([
                 f"# AGENTS.md (Scoped for `{project}`)",
                 "",
@@ -432,6 +590,100 @@ def detect_tools(root: str | os.PathLike = ".") -> list[str]:
         "Dockerfile": "docker", "docker-compose.yml": "docker", "vercel.json": "vercel",
         "next.config.js": "nextjs", "next.config.mjs": "nextjs", "next.config.ts": "nextjs",
         "tailwind.config.js": "tailwind", "tailwind.config.ts": "tailwind", "prisma": "prisma",
-        ".github/workflows": "github-actions", "Makefile": "make",
+        ".github/workflows": "github-actions", "Makefile": "make", ".cursor": "cursor",
     }
     return sorted({tool for marker, tool in markers.items() if (root / marker).exists()})
+
+
+_GENERIC_HEADERS = {
+    "rules", "engineering", "agent", "agents", "tools", "tool", "general", "global",
+    "deployment", "workflow", "workflows", "coding", "style", "testing", "tests",
+    "guidelines", "instructions", "claude", "cursor", "md", "team", "monorepo", "multi", "service",
+}
+
+
+def parse_markdown_rules(md_text: str, known_projects=()) -> list[dict]:
+    """Parse headings and bullet directives from CLAUDE.md / AGENTS.md / .cursorrules."""
+    rules: list[dict] = []
+    section_ctx: dict[str, str | None] = {"project": None, "tool": None, "task": None}
+    proj_set = set(known_projects)
+
+    for raw in md_text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        h_match = re.match(r"^#{1,4}\s+(.+)$", line)
+        if h_match:
+            raw_h = h_match.group(1).strip()
+            h = raw_h.lower()
+            section_ctx = {"project": None, "tool": None, "task": None}
+            words = re.findall(r"[a-z0-9][a-z0-9_-]*", h)
+            is_sub = raw.lstrip().startswith("##")
+            for w in words:
+                is_known_or_hyphen = w in proj_set or ("-" in w and w not in KNOWN_TOOLS and w not in KNOWN_TASKS and w not in _GENERIC_HEADERS and len(w) >= 4)
+                is_single_proj_sub = is_sub and len(words) == 1 and w not in KNOWN_TOOLS and w not in KNOWN_TASKS and w not in _GENERIC_HEADERS and len(w) >= 3
+                if is_known_or_hyphen or is_single_proj_sub:
+                    section_ctx["project"] = w
+                    proj_set.add(w)
+                    break
+
+            for t in KNOWN_TOOLS:
+                if t in words:
+                    section_ctx["tool"] = "python" if t == "pytest" else t
+                    break
+            for k in KNOWN_TASKS:
+                if k in words:
+                    section_ctx["task"] = k
+                    break
+            continue
+
+        b_match = re.match(r"^(?:[-*+]|\d+\.)\s+(.+)$", line)
+        if not b_match:
+            continue
+        text = b_match.group(1).strip().strip("`")
+        if len(text) < 6:
+            continue
+
+        lower = text.lower()
+        scopes: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+
+        def add_scope(kind: str, name: str):
+            pair = (kind, name)
+            if pair not in seen:
+                seen.add(pair)
+                scopes.append(pair)
+
+        matched_proj = None
+        for p in sorted(proj_set):
+            if re.search(rf"\b{re.escape(p)}\b", lower, re.I):
+                matched_proj = p
+                break
+        if matched_proj:
+            add_scope("project", matched_proj)
+        elif section_ctx["project"]:
+            add_scope("project", section_ctx["project"])
+
+        for t in KNOWN_TOOLS:
+            if re.search(rf"\b{re.escape(t)}\b", lower, re.I):
+                add_scope("tool", "python" if t == "pytest" else t)
+        if not any(k == "tool" for k, _ in scopes) and section_ctx["tool"]:
+            add_scope("tool", section_ctx["tool"])
+
+        for k in KNOWN_TASKS:
+            if re.search(rf"\b{re.escape(k)}\b", lower, re.I):
+                add_scope("task", k)
+        if not any(k == "task" for k, _ in scopes) and section_ctx["task"]:
+            add_scope("task", section_ctx["task"])
+
+        if not matched_proj and any(k == "tool" for k, _ in scopes) and section_ctx["project"]:
+            sec_proj = section_ctx["project"]
+            first_tool = next(n for k, n in scopes if k == "tool")
+            filtered = [(k, n) for k, n in scopes if not (k == "project" and n == sec_proj)]
+            rules.append({"text": text, "scopes": filtered, "project_uses": (sec_proj, first_tool)})
+            continue
+
+        rules.append({"text": text, "scopes": scopes, "project_uses": None})
+
+    return rules
+

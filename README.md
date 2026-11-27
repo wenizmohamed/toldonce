@@ -16,9 +16,10 @@ Open **https://toldonce.vercel.app/** — zero installs, zero backend, running r
 
 1. **Click any of the 5 Judge Scenario Presets** (*Tool Inheritance*, *Project Isolation / Zero Leak*, *Superseding History*, *Conflicting Rules Guard*, *Repeat Correction Stats*) to execute live Cypher and watch the **Interactive Relate Graph Visualizer** highlight exact traversal paths (`:USES`, `:APPLIES_TO`, `:SUPERSEDES`, `:CONTRADICTS`, `:REPEATS`).
 2. **Hover or click any recalled lesson or graph node** to isolate its justification path and open the **Node Inspector** (properties, edges, supersede chain, and correction history).
-3. **Run the Interactive Live Cypher Console** directly against `@relate/relate-wasm` with 5 clickable expert Cypher queries (*`SUPERSEDES*1..` Audit Chain*, *`CONTRADICTS` Conflict Finder*, *Top Repeated Corrections*, *Cross-Repo Tool Matrix*, *Recall Provenance Audit*) or write custom Cypher with live **Table + JSON output**, real `ms` latency, and click-to-focus graph integration.
-4. **Use 1-Click Export to `.claude/rules/` & `AGENTS.md` (Scoped)** to query the live Relate WASM graph for any project (`storefront`, `trading-bot`, `agency-site`) and generate a clean, conflict-free, zero-leak instruction pack with Cypher path provenance comments and conflict quarantine.
-5. **Inspect the Live `recall.cypher` Trace Drawer**, paste any `CLAUDE.md` / `AGENTS.md` into **Explode Into Relate Graph**, and run the **Live 8-Query WASM Benchmark** (`8/8 PASS · 100% Scoped Precision · 0% Cross-Project Leaks`).
+3. **Run the Interactive Live Cypher Console** directly against `@relate/relate-wasm` with 5 clickable expert Cypher queries (*`SUPERSEDES*1..` Audit Chain*, *`CONTRADICTS` Conflict Finder*, *Top Repeated Corrections*, *Cross-Repo Tool Matrix*, *Recall Provenance Audit*) or write custom Cypher with live **Table + JSON + Native `PROFILE Plan` (`relate.plan/v1` operator tree, `db_hits`, `neighbor_walks`, and `parse/plan/execute` phase telemetry)** and click-to-focus graph integration.
+4. **Resolve Conflicts Live in 1 Click & Export to `.claude/rules/`, `AGENTS.md`, or `.cursor/rules/*.mdc` (Scoped)** — click *Keep this rule* on any conflicted rule pair to convert `:CONTRADICTS` into `:SUPERSEDES` lineage live in WASM, or compile a clean, conflict-free, zero-leak instruction pack for Claude Code, Codex/Gemini, or Cursor MDC.
+5. **Inspect the Live `recall.cypher` Trace Drawer**, paste any `CLAUDE.md` / `AGENTS.md` into **Explode Into Relate Graph** (or run `toldonce import-md CLAUDE.md` in CLI), and run the **Live 8-Query WASM Benchmark** (`8/8 PASS · 100% Scoped Precision · 0% Cross-Project Leaks`).
+
 
 ## The problem
 
@@ -68,8 +69,9 @@ Requires Python 3.10+. Relate comes in as a pip dependency (`relate-db`), so the
 git clone https://github.com/wenizmohamed/toldonce && cd toldonce
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[test]"
-pytest -q                              # 29 Python tests (relate-db)
-node --test tests/test_web_engine.mjs  # 10 JS tests (@relate/relate-wasm)
+pytest -q                              # 33 Python tests (relate-db)
+node --test tests/test_web_engine.mjs  # 12 JS tests (@relate/relate-wasm)
+
 ```
 
 ### Try it on the demo store
@@ -81,11 +83,16 @@ export TOLDONCE_DB=demo/lessons.rl
 toldonce list
 toldonce recall "commit the new checkout page copy" --project storefront
 toldonce recall "redesign the hero" --project agency-site      # shows the open conflict
+toldonce resolve ed5bd42c 7cc562d0 --note "Keep editorial"     # resolves conflict via :SUPERSEDES
+toldonce profile "commit the new checkout page copy" --project storefront   # native relate.plan/v1 PROFILE
 toldonce show <lesson-id>                                      # supersede chain + every correction
 toldonce stats                                                 # what you've had to say twice
+toldonce import-md CLAUDE.md                                   # explode flat CLAUDE.md / .cursorrules into Relate
 toldonce export-rules --project storefront --format claude     # conflict-free .claude/rules/ pack with provenance
+toldonce export-rules --project storefront --format cursor     # Cursor .cursor/rules/*.mdc pack
 toldonce export-rules --project trading-bot --format agents    # scoped AGENTS.md with 0 cross-project leaks
 ```
+
 
 ### Teach it
 
@@ -106,7 +113,8 @@ The store defaults to `~/.toldonce/lessons.rl`, one graph shared across all your
 - The `UserPromptSubmit` hook (`toldonce hook --capture`) fingerprints the repo (git, node, pnpm, python, docker, vercel…), records `(:Project)-[:USES]->(:Tool)`, and injects a `<toldonce>` block with the lessons that apply before the model sees your prompt.
 - With `--capture`, prompts that read as corrections ("no, …", "don't …", "I told you …") are learned automatically, scoped to the current project.
 
-**Any MCP host:** `toldonce-mcp` is a stdio MCP server with `recall`, `learn`, `supersede`, `history`, and `export_rules` tools. It is dependency-free and runs on the same store.
+**Any MCP host:** `toldonce-mcp` is a stdio MCP server with `recall`, `learn`, `supersede`, `resolve_conflict`, `history`, `import_markdown`, `profile_recall`, and `export_rules` tools. It is dependency-free and runs on the same store.
+
 
 **Anything else:** `toldonce recall --cwd . --context "<prompt>"` prints the block to paste into a system prompt, and `--json` prints structured hits.
 

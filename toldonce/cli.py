@@ -88,6 +88,10 @@ def main(argv=None):
 
     s = sub.add_parser("supersede", help="NEW replaces OLD")
     s.add_argument("new"); s.add_argument("old")
+    s = sub.add_parser("resolve", help="resolve a conflict by keeping WINNER and superseding LOSER")
+    s.add_argument("winner"); s.add_argument("loser")
+    s.add_argument("--note", help="optional resolution rationale stored in graph")
+    s.add_argument("--json", action="store_true")
     s = sub.add_parser("contradict", help="mark two lessons as conflicting")
     s.add_argument("a"); s.add_argument("b")
     s = sub.add_parser("retire", help="switch a lesson off")
@@ -95,14 +99,26 @@ def main(argv=None):
     s = sub.add_parser("stats")
     s.add_argument("--json", action="store_true")
 
+    s = sub.add_parser("import-md", help="explode a flat CLAUDE.md / AGENTS.md / .cursorrules file into Relate")
+    s.add_argument("file", help="markdown file path (or '-' for stdin)")
+    s.add_argument("--json", action="store_true")
+
+    s = sub.add_parser("profile", help="run Relate native PROFILE on recall.cypher (relate.plan/v1 + phase ms)")
+    s.add_argument("prompt", nargs="?", default="")
+    s.add_argument("--project")
+    s.add_argument("--tool", action="append", default=[])
+    s.add_argument("--cwd", help="detect project + tools from this directory")
+    s.add_argument("--json", action="store_true")
+
     s = sub.add_parser("export", help="dump the graph as a replayable Cypher script")
     s.add_argument("--recalls", action="store_true", help="include Recall log nodes")
 
-    s = sub.add_parser("export-rules", help="export a scoped, conflict-free .claude/rules/ or AGENTS.md pack")
+    s = sub.add_parser("export-rules", help="export a scoped, conflict-free .claude/rules/, AGENTS.md, or .cursor/rules/*.mdc pack")
     s.add_argument("--project", required=True, help="target project name")
-    s.add_argument("--format", dest="fmt", choices=["claude", "agents"], default="claude", help="pack format")
+    s.add_argument("--format", dest="fmt", choices=["claude", "agents", "cursor"], default="claude", help="pack format")
     s.add_argument("--include-conflicts", action="store_true", help="keep conflicted rules inline instead of quarantining")
     s.add_argument("--json", action="store_true", help="print JSON metadata + content")
+
 
     s = sub.add_parser("hook", help="Claude Code UserPromptSubmit hook (JSON on stdin)")
     s.add_argument("--capture", action="store_true", help="also learn from prompts that read as corrections")
@@ -150,6 +166,12 @@ def _run(a, g: LessonGraph):
             print(f"  {s['at'][:19]}  {s['kind'].lower():8} \"{s['said']}\"")
     elif a.cmd == "supersede":
         g.supersede(a.new, a.old); print(f"{a.new} supersedes {a.old}")
+    elif a.cmd == "resolve":
+        res = g.resolve_conflict(a.winner, a.loser, note=a.note)
+        if a.json:
+            print(json.dumps(res, indent=2))
+        else:
+            print(f"resolved conflict: kept {res['winner']} (supersedes {res['superseded']}; {res['open_conflicts']} open conflicts left)")
     elif a.cmd == "contradict":
         g.contradict(a.a, a.b); print(f"{a.a} conflicts with {a.b}")
     elif a.cmd == "retire":
@@ -163,7 +185,40 @@ def _run(a, g: LessonGraph):
               f"{st['recalls']} recalls surfaced {st['surfaced']} lessons")
         for m in st["most_repeated"]:
             print(f"  told {m['told']}x  [{m['id']}] {m['text']}")
+    elif a.cmd == "import-md":
+        md_text = sys.stdin.read() if a.file == "-" else Path(a.file).read_text(encoding="utf-8")
+        res = g.import_markdown(md_text)
+        if a.json:
+            print(json.dumps(res, indent=2))
+        else:
+            print(f"imported {res['parsed_rules']} rules: +{res['created_lessons']} lessons, "
+                  f"{res['merged_repeats']} repeats merged, {res['flagged_conflicts']} conflicts flagged")
+    elif a.cmd == "profile":
+        project, tools = a.project, list(a.tool)
+        if a.cwd:
+            root = Path(a.cwd).resolve()
+            project = project or root.name
+            found = detect_tools(root)
+            g.note_project(project, found)
+            tools += found
+        prof = g.profile_recall(project, tools, a.prompt)
+        if a.json:
+            print(json.dumps(prof, indent=2))
+        else:
+            print(f"PROFILE recall.cypher ({prof['elapsed_ms']:.2f} ms: parse {prof['parse_ms']:.2f} ms, "
+                  f"plan {prof['plan_ms']:.2f} ms, execute {prof['execute_ms']:.2f} ms)")
+            def _walk(node, depth=0):
+                if not node:
+                    return
+                act = node.get("actual") or {}
+                stats = f"rows={act.get('rows', '-')} hits={act.get('db_hits', '-')} time={act.get('time_ms', 0):.2f}ms" if act else ""
+                print(f"{'  ' * depth}- {node.get('operator')}: {node.get('details', '')}  {stats}".rstrip())
+                for ch in node.get("children") or []:
+                    _walk(ch, depth + 1)
+            if prof.get("plan") and prof["plan"].get("root"):
+                _walk(prof["plan"]["root"])
     elif a.cmd == "export":
+
         from .store import export_cypher
         print(export_cypher(g, a.recalls), end="")
     elif a.cmd == "export-rules":

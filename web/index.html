@@ -830,6 +830,27 @@ textarea {
 .chip.con { background: var(--amber-soft); color: var(--amber); border-color: transparent; font-weight: 600; }
 .chip.sup { background: var(--sage-soft); color: var(--sage); border-color: transparent; }
 .chip.new-badge { background: var(--sage); color: #FFFFFF; border-color: transparent; font-weight: 600; }
+.resolve-btn {
+  margin: 0;
+  padding: 3px 9px;
+  font: 600 11px/1.2 var(--font-mono);
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: #FFFFFF;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.resolve-btn:hover { background: #23633D; }
+.profile-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #FFFFFF;
+}
+
 
 /* ---------------- Recalled Lessons List ---------------- */
 ol.hits {
@@ -1900,21 +1921,23 @@ ORDER BY timesTold DESC, lessonId</textarea>
           <div class="seg" id="cyViewSeg">
             <button type="button" data-view="table" class="active">Table</button>
             <button type="button" data-view="json">JSON</button>
+            <button type="button" data-view="profile">PROFILE Plan</button>
           </div>
         </div>
         <div class="cy-table-wrap" id="cyTableWrap"></div>
+        <div class="cy-table-wrap" id="cyProfileWrap" style="display:none"></div>
         <pre id="cyOut" style="display:none"></pre>
       </section>
     </div>
   </div>
 
-  <!-- 1-Click Scoped Export to .claude/rules/ & AGENTS.md -->
+  <!-- 1-Click Scoped Export to .claude/rules/, AGENTS.md & .cursor/rules/*.mdc -->
   <section class="card export-card" id="exportSection">
     <div class="card-head">
-      <h2 class="card-title">1-Click Export to <code>.claude/rules/</code> &amp; <code>AGENTS.md</code> <em>(Scoped)</em></h2>
+      <h2 class="card-title">1-Click Export to <code>.claude/rules/</code>, <code>AGENTS.md</code> &amp; <code>.cursor/rules/</code> <em>(Scoped)</em></h2>
       <span class="metric-pill sage" id="exportLatency">0.00 ms · WASM live</span>
     </div>
-    <p class="card-sub">Queries the live <code>@relate/relate-wasm</code> graph for a single project and compiles a clean, conflict-free, zero-leak instruction pack with full Cypher path provenance comments.</p>
+    <p class="card-sub">Queries the live <code>@relate/relate-wasm</code> graph for a single project and compiles a clean, conflict-free, zero-leak instruction pack for Claude Code, Codex/Gemini (<code>AGENTS.md</code>), or Cursor MDC with full Cypher path provenance comments.</p>
 
     <div class="export-grid">
       <div>
@@ -1928,9 +1951,11 @@ ORDER BY timesTold DESC, lessonId</textarea>
             <div class="seg" id="exportFmtSeg" style="width:100%;justify-content:space-between">
               <button type="button" data-fmt="claude" class="active" style="flex:1">.claude/rules/</button>
               <button type="button" data-fmt="agents" style="flex:1">AGENTS.md</button>
+              <button type="button" data-fmt="cursor" style="flex:1">.cursor/*.mdc</button>
             </div>
           </div>
         </div>
+
 
         <label class="check-toggle">
           <input type="checkbox" id="exportStrictCheck" checked>
@@ -2139,19 +2164,46 @@ let graphNodes = [], graphLinks = [], nodeByK = new Map();
 let lastHits = [], lastTrace = null, activePresetId = "inheritance";
 let focusedLessonId = null, selectedNodeK = null, newlyLearnedId = null;
 let graphMode = "all";
-let cyViewMode = "table", activeCyPreset = "repeats", lastCyRows = [];
+let cyViewMode = "table", activeCyPreset = "repeats", lastCyRows = [], lastCyEnv = null;
 let exportFmt = "claude", lastExportPack = null;
 let viewBox = { x: 0, y: 0, w: 840, h: 540 };
 let draggingNode = null, panning = null;
 
-function run(q, params) {
+function runEnv(q, params) {
   const env = JSON.parse(db.execute(q, params ? JSON.stringify(params) : null));
   if (env.error) throw new Error(typeof env.error === "string" ? env.error : JSON.stringify(env.error));
-  return env.rows;
+  return env;
 }
 
-const tokens = t => new Set((t.toLowerCase().match(/[a-z0-9][a-z0-9_.+]*/g) || []).filter(w => w.length > 1 && !STOP.has(w)));
-const ftQuery = t => [...tokens(t)].sort().slice(0, 24).join(" OR ");
+function run(q, params) {
+  return runEnv(q, params).rows;
+}
+
+function resolveConflictLive(winnerId, loserId) {
+  run(
+    "MATCH (n:Lesson {id: $n}), (o:Lesson {id: $o}) MERGE (n)-[:SUPERSEDES]->(o) WITH n, o OPTIONAL MATCH (n)-[c:CONTRADICTS]-(o) DELETE c RETURN count(*) AS k",
+    { n: winnerId, o: loserId }
+  );
+  newlyLearnedId = winnerId;
+  refreshSelectors();
+  renderRecall(true);
+  renderScopedExport();
+  if (activeCyPreset === "conflicts" || activeCyPreset === "supersedes") {
+    runCypherConsole();
+  }
+  const winNode = graphNodes.find(n => n.label === "Lesson" && n.id === winnerId);
+  if (winNode) {
+    inspectNode(winNode.k);
+    drawGraphSVG(winnerId);
+  }
+}
+
+
+const stem = w => (w.length >= 5 && w.endsWith("s") && !w.endsWith("ss")) ? w.slice(0, -1) : w;
+const tokens = t => new Set((t.toLowerCase().match(/[a-z0-9][a-z0-9_.+]*/g) || []).filter(w => w.length > 1 && !STOP.has(w)).map(stem));
+const rawTokens = t => new Set((t.toLowerCase().match(/[a-z0-9][a-z0-9_.+]*/g) || []).filter(w => w.length > 1 && !STOP.has(w)));
+const ftQuery = t => [...rawTokens(t)].sort().slice(0, 24).join(" OR ");
+
 const jaccard = (a, b) => {
   const A = tokens(a), B = tokens(b);
   if (!A.size || !B.size) return 0;
@@ -2173,8 +2225,10 @@ function recall(project, prompt, log = true) {
   const top = Math.max(0, ...Object.values(textScores)) || 1;
   const params = { project, tools: [], text: prompt.toLowerCase() };
   const t1 = performance.now();
-  const rawRows = run(RECALL, params);
+  const recallEnv = runEnv(RECALL, params);
+  const rawRows = recallEnv.rows;
   const tGraph = performance.now() - t1;
+
 
   const hits = rawRows.map(r => {
     let score = 0;
@@ -2226,9 +2280,17 @@ function recall(project, prompt, log = true) {
   }
   return {
     hits,
-    trace: { project, prompt, ft, params, ftMs: tFt, graphMs: tGraph, totalMs: tFt + tGraph, candidateCount: rawRows.length }
+    trace: {
+      project, prompt, ft, params, ftMs: tFt, graphMs: tGraph, totalMs: tFt + tGraph,
+      candidateCount: rawRows.length,
+      parseMs: recallEnv.parse_ms || 0,
+      planMs: recallEnv.plan_ms || 0,
+      execMs: recallEnv.execute_ms || 0,
+      planCache: recallEnv.plan_cache || "hit"
+    }
   };
 }
+
 
 function learn(said, scope, supersedesId) {
   const cid = id8();
@@ -2420,10 +2482,19 @@ function renderRecall(keepLayout = false) {
         ${h.repeats ? `<span class="chip rep">told ${h.repeats + 1}x</span>` : ""}
         ${h.replaced ? `<span class="chip sup">replaces ${h.replaced} older</span>` : ""}
         ${h.conflicts.length ? `<span class="chip con">conflicts with ${esc(h.conflicts.join(", "))}</span>` : ""}
+        ${h.conflicts.map(cid => `<button type="button" class="resolve-btn" data-win="${esc(h.id)}" data-lose="${esc(cid)}" title="Resolve conflict in Relate: keep ${esc(h.id)} and supersede ${esc(cid)}">Keep this rule (supersede ${esc(cid)})</button>`).join("")}
       </div>
       <div class="hit-path">${h.paths.slice(0, 2).map(esc).join("<br>")}</div>
     </li>`;
   }).join("") || `<li style="cursor:default;color:var(--muted)">No lessons apply to this project and prompt.</li>`;
+
+  $("#hits").querySelectorAll(".resolve-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      resolveConflictLive(btn.dataset.win, btn.dataset.lose);
+    });
+  });
+
 
   $("#hits").querySelectorAll("li[data-lid]").forEach(el => {
     el.addEventListener("mouseenter", () => {
@@ -2452,10 +2523,12 @@ function renderRecall(keepLayout = false) {
 
   $("#traceMetrics").innerHTML = `
     <span class="metric-pill sage">Total: ${trace.totalMs.toFixed(2)} ms</span>
-    <span class="metric-pill">FULLTEXT SEARCH: ${trace.ftMs.toFixed(2)} ms</span>
-    <span class="metric-pill">recall.cypher: ${trace.graphMs.toFixed(2)} ms</span>
+    <span class="metric-pill">FULLTEXT: ${trace.ftMs.toFixed(2)} ms</span>
+    <span class="metric-pill">recall.cypher: ${trace.graphMs.toFixed(2)} ms (parse ${trace.parseMs.toFixed(2)} / plan ${trace.planMs.toFixed(2)} / exec ${trace.execMs.toFixed(2)} ms)</span>
+    <span class="metric-pill">Plan cache: ${esc(trace.planCache)}</span>
     <span class="metric-pill">Candidates: ${trace.candidateCount} -> Top ${hits.length}</span>
   `;
+
   $("#tracePaths").innerHTML = hits.map((h, i) => `
     <li data-lid="${esc(h.id)}">
       <div class="tp-head"><span>#${i + 1} [${esc(h.id)}] ${esc(trunc(h.text, 50))}</span><span>score ${h.score.toFixed(2)}</span></div>
@@ -2758,13 +2831,18 @@ function inspectNode(k) {
   let extra = "";
   if (n.label === "Lesson" && n.id) {
     const chain = run("MATCH p = (l:Lesson {id: $id})-[:SUPERSEDES*0..]->(o:Lesson) RETURN o.id AS id, o.text AS text, length(p) AS depth ORDER BY depth", { id: n.id });
-    const said = run("MATCH (c:Correction)-[r:TAUGHT|REPEATS]->(:Lesson {id: $id}) RETURN c.said AS said, type(r) AS kind, toString(c.at) AS at ORDER BY at", { id: n.id });
+    const said = run("MATCH (c:Correction)-[r:TAUGHT|REPEATS|RESOLVED]->(:Lesson {id: $id}) RETURN c.said AS said, type(r) AS kind, toString(c.at) AS at ORDER BY at", { id: n.id });
+    const conf = run("MATCH (:Lesson {id: $id})-[:CONTRADICTS]-(o:Lesson) WHERE o.status = 'active' AND NOT EXISTS { (:Lesson)-[:SUPERSEDES]->(o) } RETURN o.id AS id, o.text AS text", { id: n.id });
     const chainHtml = chain.length > 1
       ? `<div style="margin-bottom:4px"><strong>Supersede chain:</strong> ${chain.map(c => `[${esc(c.id)}] ${esc(trunc(c.text, 44))}`).join(" -> ")}</div>`
       : "";
+    const confHtml = conf.length
+      ? `<div style="margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><strong style="color:var(--amber)">Open conflict:</strong> ${conf.map(c => `<button type="button" class="resolve-btn" data-inspwin="${esc(n.id)}" data-insplose="${esc(c.id)}">Keep [${esc(n.id)}] &amp; supersede [${esc(c.id)}]</button>`).join(" ")}</div>`
+      : "";
     const saidHtml = said.map(s => `<div>· <b>${esc(s.kind)}</b>: "${esc(s.said)}"</div>`).join("");
-    extra = `<div class="history-box">${chainHtml}${saidHtml || "No corrections recorded."}</div>`;
+    extra = `<div class="history-box">${confHtml}${chainHtml}${saidHtml || "No corrections recorded."}</div>`;
   }
+
 
   const relChips = [
     ...outgoing.map(l => `<span class="rel-chip" data-jump="${esc(l.b.k)}">-[:${l.type}]-&gt; :${l.b.label} ${esc(trunc(l.b.name, 26))}</span>`),
@@ -2792,6 +2870,12 @@ function inspectNode(k) {
       drawGraphSVG(focusedLessonId);
     });
   });
+  $("#inspector").querySelectorAll("[data-inspwin]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      resolveConflictLive(btn.dataset.inspwin, btn.dataset.insplose);
+    });
+  });
+
 }
 
 function setupGraphInteraction() {
@@ -2918,14 +3002,59 @@ function formatCyCell(col, val) {
   return esc(String(val));
 }
 
+function renderProfileTree(env) {
+  const profWrap = $("#cyProfileWrap");
+  if (!env || !env.plan || !env.plan.root) {
+    profWrap.innerHTML = `<div class="cy-empty">PROFILE plan applies to read/traversal queries (MATCH / WITH / RETURN). Run any read query to inspect its live <code>relate.plan/v1</code> operator tree.</div>`;
+    return;
+  }
+  const flatOps = [];
+  const walk = (node, depth = 0) => {
+    if (!node) return;
+    flatOps.push({ node, depth });
+    (node.children || []).forEach(c => walk(c, depth + 1));
+  };
+  walk(env.plan.root, 0);
+
+  const bar = `<div class="profile-bar">
+    <span class="metric-pill sage">schema: ${esc(env.plan.schema || "relate.plan/v1")}</span>
+    <span class="metric-pill">elapsed: ${(env.elapsed_ms || 0).toFixed(2)} ms</span>
+    <span class="metric-pill">parse: ${(env.parse_ms || 0).toFixed(2)} ms</span>
+    <span class="metric-pill">plan: ${(env.plan_ms || 0).toFixed(2)} ms</span>
+    <span class="metric-pill">execute: ${(env.execute_ms || 0).toFixed(2)} ms</span>
+    <span class="metric-pill">cache: ${esc(env.plan_cache || "miss")}</span>
+  </div>`;
+
+  const rowsHtml = flatOps.map(({ node, depth }) => {
+    const act = node.actual || {};
+    const indent = "&nbsp;&nbsp;&nbsp;".repeat(depth) + (depth ? "└─ " : "");
+    return `<tr>
+      <td>${indent}<code>${esc(node.operator || "Op")}</code></td>
+      <td style="color:var(--ink-soft)">${esc(node.details || "-")}</td>
+      <td style="font-family:var(--font-mono)">${act.rows ?? "-"}</td>
+      <td style="font-family:var(--font-mono)">${act.db_hits ?? "-"}</td>
+      <td style="font-family:var(--font-mono)">${act.neighbor_walks ?? "-"}</td>
+      <td style="font-family:var(--font-mono)">${act.time_ms !== undefined ? act.time_ms.toFixed(3) + " ms" : "-"}</td>
+    </tr>`;
+  }).join("");
+
+  profWrap.innerHTML = `${bar}<table class="cy-table">
+    <thead><tr><th>Operator</th><th>Pattern / Details</th><th>Rows</th><th>DB Hits</th><th>Walks</th><th>Time</th></tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>`;
+}
+
 function renderCypherOutput(rows, errMsg = null) {
   const wrap = $("#cyTableWrap");
+  const profWrap = $("#cyProfileWrap");
   const pre = $("#cyOut");
   if (errMsg) {
     pre.textContent = errMsg;
     wrap.innerHTML = `<div class="cy-empty" style="color:var(--ember-deep)">${esc(errMsg)}</div>`;
+    profWrap.innerHTML = `<div class="cy-empty" style="color:var(--ember-deep)">${esc(errMsg)}</div>`;
   } else {
     pre.textContent = JSON.stringify(rows, null, 2);
+    renderProfileTree(lastCyEnv);
     if (!rows.length) {
       wrap.innerHTML = `<div class="cy-empty">Query succeeded with 0 rows.</div>`;
     } else {
@@ -2953,26 +3082,34 @@ function renderCypherOutput(rows, errMsg = null) {
     }
   }
   wrap.style.display = cyViewMode === "table" ? "block" : "none";
+  profWrap.style.display = cyViewMode === "profile" ? "block" : "none";
   pre.style.display = cyViewMode === "json" ? "block" : "none";
 }
 
 function runCypherConsole() {
+  const rawQuery = $("#cy").value.trim();
+  const isReadOnly = /^\s*(MATCH|OPTIONAL\s+MATCH|WITH|UNWIND|RETURN)\b/i.test(rawQuery) && !/\b(CREATE|MERGE|DELETE|SET|REMOVE)\b/i.test(rawQuery);
+  const execQuery = (isReadOnly && !/^\s*(PROFILE|EXPLAIN)\b/i.test(rawQuery)) ? ("PROFILE " + rawQuery) : rawQuery;
   const t0 = performance.now();
   try {
-    const rows = run($("#cy").value);
+    const env = runEnv(execQuery);
     const ms = performance.now() - t0;
+    const rows = env.rows || [];
     lastCyRows = rows;
+    lastCyEnv = env;
     const cols = rows.length ? Object.keys(rows[0]).length : 0;
     $("#cyLatency").textContent = `${ms.toFixed(2)} ms · ${rows.length} row${rows.length === 1 ? "" : "s"}${cols ? ` · ${cols} col${cols === 1 ? "" : "s"}` : ""}`;
     $("#cyLatency").className = "metric-pill sage";
     renderCypherOutput(rows, null);
   } catch (e) {
     lastCyRows = [];
+    lastCyEnv = null;
     $("#cyLatency").textContent = "Cypher error";
     $("#cyLatency").className = "metric-pill ember";
     renderCypherOutput([], String(e.message || e));
   }
 }
+
 
 // --- 1-Click Scoped Export (.claude/rules/ & AGENTS.md) directly from Live Relate WASM ---
 const SCOPED_EXPORT_CYPHER = `MATCH (l:Lesson)
@@ -3057,8 +3194,24 @@ function buildScopedExportPack(project, fmt = "claude", strictConflictFree = tru
       `<!-- toldonce-audit: project=${project} | active=${activeRows.length} | quarantined_conflicts=${quarantined.length} | other_projects_excluded=${audit.otherProjectExcluded} | superseded_excluded=${audit.supersededExcluded} -->`,
       ""
     );
+  } else if (fmt === "cursor") {
+    displayPath = `.cursor/rules/toldonce-${project}.mdc`;
+    downloadName = `toldonce-${project}.mdc`;
+    lines.push(
+      "---",
+      `description: ToldOnce scoped Relate graph rules for ${project} (conflict-free, zero cross-project leaks)`,
+      'globs: ["**/*"]',
+      "alwaysApply: true",
+      "---",
+      "",
+      `# ToldOnce Cursor MDC Rules: \`${project}\``,
+      "",
+      `<!-- toldonce-audit: project=${project} | format=cursor-mdc | active=${activeRows.length} | quarantined_conflicts=${quarantined.length} | other_projects_excluded=${audit.otherProjectExcluded} | superseded_excluded=${audit.supersededExcluded} -->`,
+      ""
+    );
   } else {
     displayPath = `AGENTS.md (scoped: ${project})`;
+
     downloadName = `AGENTS-${project}.md`;
     lines.push(
       `# AGENTS.md (Scoped for \`${project}\`)`,
@@ -3180,8 +3333,9 @@ const MD_PRESETS = {
 - Deploy staging previews via vercel CI, never manual CLI`
 };
 
-const KNOWN_TOOLS = ["git", "pnpm", "npm", "node", "nextjs", "tailwind", "vercel", "python", "docker", "rust", "go", "prisma", "pytest", "stripe", "typescript"];
+const KNOWN_TOOLS = ["git", "pnpm", "npm", "node", "nextjs", "tailwind", "vercel", "python", "docker", "rust", "go", "prisma", "pytest", "stripe", "typescript", "cursor"];
 const KNOWN_TASKS = ["copy", "commit", "deploy", "review", "merge", "migration", "refactor"];
+const GENERIC_HEADERS = new Set(["rules", "engineering", "agent", "agents", "tools", "tool", "general", "global", "deployment", "workflow", "workflows", "coding", "style", "testing", "tests", "guidelines", "instructions", "claude", "cursor", "md", "team", "monorepo", "multi", "service"]);
 
 function parseMarkdownRules(mdText, knownProjects) {
   const lines = mdText.split(/\r?\n/);
@@ -3197,13 +3351,17 @@ function parseMarkdownRules(mdText, knownProjects) {
       const h = hMatch[1].toLowerCase();
       sectionCtx = { project: null, tool: null, task: null };
       const words = h.match(/[a-z0-9][a-z0-9_-]*/g) || [];
+      const isSub = line.startsWith("##");
       for (const w of words) {
-        if (projSet.has(w) || (w.includes("-") && !KNOWN_TOOLS.includes(w) && !KNOWN_TASKS.includes(w) && w.length >= 4)) {
+        const isKnownOrHyphen = projSet.has(w) || (w.includes("-") && !KNOWN_TOOLS.includes(w) && !KNOWN_TASKS.includes(w) && !GENERIC_HEADERS.has(w) && w.length >= 4);
+        const isSingleProjSub = isSub && words.length === 1 && !KNOWN_TOOLS.includes(w) && !KNOWN_TASKS.includes(w) && !GENERIC_HEADERS.has(w) && w.length >= 3;
+        if (isKnownOrHyphen || isSingleProjSub) {
           sectionCtx.project = w;
           projSet.add(w);
           break;
         }
       }
+
       for (const t of KNOWN_TOOLS) if (words.includes(t)) { sectionCtx.tool = t; break; }
       for (const k of KNOWN_TASKS) if (words.includes(k)) { sectionCtx.task = k; break; }
       continue;
@@ -3641,9 +3799,11 @@ async function main() {
       cyViewMode = btn.dataset.view;
       $("#cyViewSeg").querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
       $("#cyTableWrap").style.display = cyViewMode === "table" ? "block" : "none";
+      $("#cyProfileWrap").style.display = cyViewMode === "profile" ? "block" : "none";
       $("#cyOut").style.display = cyViewMode === "json" ? "block" : "none";
     });
   });
+
   $("#cyCopyJsonBtn").onclick = async () => {
     const txt = JSON.stringify(lastCyRows, null, 2);
     try { await navigator.clipboard.writeText(txt); } catch {}

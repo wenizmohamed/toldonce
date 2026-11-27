@@ -399,4 +399,122 @@ def test_detect_tools_fingerprints_repo_markers(tmp_path):
     assert found == ["docker", "git", "node", "pnpm", "python", "vercel"]
 
 
+def test_resolve_conflict_supersedes_loser_and_clears_open_conflict(g):
+    a = g.learn("Hero sections use dark glass cards in agency-site", scopes=[("project", "agency-site")])["lesson"]
+    b = g.learn("Hero sections use editorial photography, not dark glass cards in agency-site",
+                scopes=[("project", "agency-site")])["lesson"]
+    g.contradict(a, b)
+    assert g.stats()["conflicts"] == 1
+    res = g.resolve_conflict(b, a, note="Editorial photography approved by design lead")
+    assert res == {"winner": b, "superseded": a, "open_conflicts": 0}
+    hits = g.recall("agency-site", [], "redesign hero section")
+    assert [h.id for h in hits] == [b]
+    assert hits[0].conflicts == []
+    assert hits[0].replaced == 1
+
+
+def test_import_markdown_merges_repeats_and_flags_contradictions(g):
+    md = """# Engineering Rules (CLAUDE.md)
+
+## storefront
+- Use pnpm in storefront, never npm
+- Always use strict TypeScript types in storefront
+
+## Git & Deployment
+- Always run the test suite before every git commit
+- Run tests before you commit in git, please
+- Never force-push to main in git
+
+## agency-site
+- Hero sections use dark glass cards in agency-site
+- Hero sections use editorial photography, not dark glass cards in agency-site
+"""
+    summary = g.import_markdown(md)
+    assert summary["parsed_rules"] == 7
+    assert summary["merged_repeats"] == 1
+    assert summary["flagged_conflicts"] == 1
+    assert summary["created_lessons"] == 6
+    sf_hits = g.recall("storefront", ["git"], "commit checkout fix")
+    assert any("pnpm" in h.text for h in sf_hits)
+    ag_hits = g.recall("agency-site", [], "hero cards")
+    assert any(h.conflicts for h in ag_hits)
+
+
+def test_cursor_mdc_scoped_export_format_and_profile_recall(tmp_path):
+    import shutil
+    demo_db = Path(__file__).parent.parent / "demo" / "lessons.rl"
+    copy_db = tmp_path / "demo_v2.rl"
+    shutil.copy2(demo_db, copy_db)
+    g = LessonGraph(str(copy_db))
+    try:
+        mdc = g.export_scoped_pack("storefront", fmt="cursor", exclude_conflicts=True)
+        assert mdc["filename"] == ".cursor/rules/toldonce-storefront.mdc"
+        assert 'globs: ["**/*"]' in mdc["content"]
+        assert "alwaysApply: true" in mdc["content"]
+        assert "9dd0b4e9" in mdc["active_ids"]
+        assert "34230a0d" not in mdc["active_ids"]
+
+        prof = g.profile_recall("storefront", [], "commit checkout copy")
+        assert prof["plan"] is not None
+        assert prof["plan"]["schema"] == "relate.plan/v1"
+        assert prof["plan"]["profiled"] is True
+        assert prof["elapsed_ms"] >= 0
+    finally:
+        g.close()
+
+
+def test_cli_and_mcp_v020_new_commands_roundtrip(tmp_path):
+    md_file = tmp_path / "CLAUDE.md"
+    md_file.write_text(
+        "## storefront\n- Use pnpm in storefront, never npm\n"
+        "## agency-site\n- Hero sections use dark glass cards in agency-site\n"
+        "- Hero sections use editorial photography, not dark glass cards in agency-site\n",
+        encoding="utf-8",
+    )
+    db = tmp_path / "cli_v2.rl"
+    imp_out = subprocess.run(
+        [sys.executable, "-m", "toldonce", "--db", str(db), "import-md", str(md_file), "--json"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    imp = json.loads(imp_out)
+    assert imp["parsed_rules"] == 3 and imp["flagged_conflicts"] == 1
+    conflict_item = next(it for it in imp["items"] if it["status"] == "conflict")
+    winner, loser = conflict_item["id"], conflict_item["conflict_with"]
+
+    prof_out = subprocess.run(
+        [sys.executable, "-m", "toldonce", "--db", str(db), "profile", "install deps", "--project", "storefront", "--json"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    prof = json.loads(prof_out)
+    assert prof["plan"]["schema"] == "relate.plan/v1"
+
+    msgs = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+         "params": {"name": "resolve_conflict", "arguments": {"winner": winner, "loser": loser, "note": "Keep editorial"}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call",
+         "params": {"name": "export_rules", "arguments": {"project": "agency-site", "format": "cursor"}}},
+        {"jsonrpc": "2.0", "id": 5, "method": "tools/call",
+         "params": {"name": "profile_recall", "arguments": {"project": "storefront", "prompt": "pnpm"}}},
+    ]
+    env = {**__import__("os").environ, "TOLDONCE_DB": str(db)}
+    mcp_lines = subprocess.run(
+        [sys.executable, "-c", "import toldonce.mcp as m, os; m.main(os.environ['TOLDONCE_DB'])"],
+        input="\n".join(json.dumps(m) for m in msgs), capture_output=True, text=True, env=env, check=True,
+    ).stdout.splitlines()
+    replies = [json.loads(line) for line in mcp_lines]
+    assert replies[0]["result"]["serverInfo"]["version"] == "0.2.0"
+    tool_names = {t["name"] for t in replies[1]["result"]["tools"]}
+    assert {"resolve_conflict", "import_markdown", "profile_recall", "export_rules"} <= tool_names
+    res_conf = json.loads(replies[2]["result"]["content"][0]["text"])
+    assert res_conf["open_conflicts"] == 0
+    cursor_pack = json.loads(replies[3]["result"]["content"][0]["text"])
+    assert cursor_pack["filename"] == ".cursor/rules/toldonce-agency-site.mdc"
+    assert cursor_pack["quarantined_count"] == 0
+    mcp_prof = json.loads(replies[4]["result"]["content"][0]["text"])
+    assert mcp_prof["plan"]["schema"] == "relate.plan/v1"
+
+
+
 

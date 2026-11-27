@@ -1,5 +1,9 @@
+.pytest_cache/
+.tmp_pytest_verifier/
 .venv/
 __pycache__/
-.pytest_cache/
-*.egg-info/
-build/
+tests/
+*.mp4
+*.png
+*.jpg
+

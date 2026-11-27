@@ -192,7 +192,42 @@ test("web/index.html contains all Rank #1 interactive controls and zero broken t
     'id="exportPreview"',
     "SCOPED_EXPORT_CYPHER",
     "buildScopedExportPack",
+    'id="cyProfileWrap"',
+    'data-view="profile"',
+    'data-fmt="cursor"',
+    "resolveConflictLive",
+    "renderProfileTree",
   ]) {
     assert.ok(html.includes(marker), `web/index.html missing required marker: ${marker}`);
   }
 });
+
+test("WASM native PROFILE returns relate.plan/v1 operator tree and phase telemetry", async () => {
+  const db = await freshDb();
+  const env = JSON.parse(db.execute("PROFILE " + RECALL_CYPHER, JSON.stringify({ project: "storefront", tools: [], text: "commit checkout copy" })));
+  assert.equal(env.error, null);
+  assert.ok(env.plan && env.plan.schema === "relate.plan/v1");
+  assert.equal(env.plan.profiled, true);
+  assert.ok(env.plan.root && typeof env.plan.root.operator === "string");
+  assert.equal(typeof env.parse_ms, "number");
+  assert.equal(typeof env.plan_ms, "number");
+  assert.equal(typeof env.execute_ms, "number");
+});
+
+test("WASM live 1-click conflict resolution supersedes loser and clears CONTRADICTS edge", async () => {
+  const db = await freshDb();
+  run(
+    db,
+    "MATCH (n:Lesson {id: $n}), (o:Lesson {id: $o}) MERGE (n)-[:SUPERSEDES]->(o) WITH n, o OPTIONAL MATCH (n)-[c:CONTRADICTS]-(o) DELETE c RETURN count(*) AS k",
+    { n: "ed5bd42c", o: "7cc562d0" }
+  );
+
+  const rows = run(db, RECALL_CYPHER, { project: "agency-site", tools: [], text: "redesign hero" });
+  const ids = rows.map(r => r.id);
+  assert.ok(ids.includes("ed5bd42c"));
+  assert.ok(!ids.includes("7cc562d0"));
+  const winner = rows.find(r => r.id === "ed5bd42c");
+  assert.deepEqual(winner.conflicts, []);
+  assert.equal(winner.replaced, 1);
+});
+
