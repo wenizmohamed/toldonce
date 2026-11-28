@@ -10,36 +10,55 @@ import sys
 
 from .store import DEFAULT_DB, LessonGraph
 
+# MCP tool annotation hints (all four booleans present and typed, per the MCP spec
+# and OpenAI directory requirements). openWorldHint is False everywhere: ToldOnce
+# reads and writes only its local Relate graph, never an external/open-world system.
 TOOLS = [
     {"name": "recall", "description": "Lessons from past corrections that apply to the current request. "
                                       "Call before acting on a task.",
      "inputSchema": {"type": "object", "properties": {
          "prompt": {"type": "string"}, "project": {"type": "string"},
-         "tools": {"type": "array", "items": {"type": "string"}}, "limit": {"type": "integer"}}}},
+         "tools": {"type": "array", "items": {"type": "string"}}, "limit": {"type": "integer"}}},
+     "annotations": {"title": "Recall lessons", "readOnlyHint": True, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
     {"name": "learn", "description": "Record a user correction as a lesson, scoped to project/tool/task. "
                                      "Repeats of an existing lesson are detected and counted.",
      "inputSchema": {"type": "object", "required": ["said"], "properties": {
          "said": {"type": "string"}, "lesson": {"type": "string"},
          "project": {"type": "string"}, "tool": {"type": "string"}, "task": {"type": "string"},
-         "supersedes": {"type": "string"}}}},
+         "supersedes": {"type": "string"}}},
+     "annotations": {"title": "Learn a correction", "readOnlyHint": False, "destructiveHint": False,
+                     "idempotentHint": False, "openWorldHint": False}},
     {"name": "supersede", "description": "Mark lesson `new` as replacing lesson `old`.",
      "inputSchema": {"type": "object", "required": ["new", "old"],
-                     "properties": {"new": {"type": "string"}, "old": {"type": "string"}}}},
+                     "properties": {"new": {"type": "string"}, "old": {"type": "string"}}},
+     "annotations": {"title": "Supersede a lesson", "readOnlyHint": False, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
     {"name": "resolve_conflict", "description": "Resolve an active :CONTRADICTS conflict by keeping `winner` and superseding `loser`.",
      "inputSchema": {"type": "object", "required": ["winner", "loser"],
-                     "properties": {"winner": {"type": "string"}, "loser": {"type": "string"}, "note": {"type": "string"}}}},
+                     "properties": {"winner": {"type": "string"}, "loser": {"type": "string"}, "note": {"type": "string"}}},
+     "annotations": {"title": "Resolve a conflict", "readOnlyHint": False, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
     {"name": "history", "description": "A lesson's supersede chain and the corrections behind it.",
-     "inputSchema": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}},
+     "inputSchema": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}},
+     "annotations": {"title": "Lesson history", "readOnlyHint": True, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
     {"name": "import_markdown", "description": "Explode a flat CLAUDE.md, AGENTS.md, or .cursorrules markdown document into scoped Relate graph nodes, merging repeats and flagging contradictions.",
-     "inputSchema": {"type": "object", "required": ["markdown"], "properties": {"markdown": {"type": "string"}}}},
+     "inputSchema": {"type": "object", "required": ["markdown"], "properties": {"markdown": {"type": "string"}}},
+     "annotations": {"title": "Import markdown rules", "readOnlyHint": False, "destructiveHint": False,
+                     "idempotentHint": False, "openWorldHint": False}},
     {"name": "profile_recall", "description": "Execute Relate native PROFILE on recall.cypher, returning relate.plan/v1 operator tree and parse/plan/execute millisecond phase telemetry.",
      "inputSchema": {"type": "object", "properties": {
          "prompt": {"type": "string"}, "project": {"type": "string"},
-         "tools": {"type": "array", "items": {"type": "string"}}}}},
+         "tools": {"type": "array", "items": {"type": "string"}}}},
+     "annotations": {"title": "Profile recall plan", "readOnlyHint": True, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
     {"name": "export_rules", "description": "Generate a conflict-free, zero-leak .claude/rules/, AGENTS.md, or .cursor/rules/*.mdc instruction pack with provenance comments for one project.",
      "inputSchema": {"type": "object", "required": ["project"], "properties": {
          "project": {"type": "string"}, "format": {"type": "string", "enum": ["claude", "agents", "cursor"]},
-         "exclude_conflicts": {"type": "boolean"}}}},
+         "exclude_conflicts": {"type": "boolean"}}},
+     "annotations": {"title": "Export rules pack", "readOnlyHint": True, "destructiveHint": False,
+                     "idempotentHint": True, "openWorldHint": False}},
 ]
 
 

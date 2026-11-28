@@ -3,6 +3,7 @@
 [![Devpost Submission](https://img.shields.io/badge/Devpost-Relate%20by%20Neo4j%20Hackathon-003E54?style=for-the-badge&logo=devpost&logoColor=white)](https://devpost.com/software/toldonce)
 [![Live WASM Playground](https://img.shields.io/badge/Live%20WASM%20Playground-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://toldonce.vercel.app/)
 [![Demo Video](https://img.shields.io/badge/Demo%20Video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/7ONEGMQFazw)
+[![M8ven Score](https://m8ven.ai/badge/mcp/wenizmohamed/toldonce)](https://m8ven.ai/mcp/wenizmohamed/toldonce?s=readme)
 
 **Tell your coding agent once.** Every correction you give a coding agent becomes a lesson in a [Relate](https://relatedb.ai) graph, linked to the projects, tools and tasks it covers. Before the agent acts, it recalls the lessons that connect to what you just asked.
 
